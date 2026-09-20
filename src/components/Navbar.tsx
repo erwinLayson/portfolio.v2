@@ -50,7 +50,7 @@ export default function Navbar() {
         <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
           <a
             href="#hero-section"
-            className="flex h-16 w-16 items-center justify-center"
+            className="flex h-16 w-16 items-center justify-center rounded-full overflow-hidden"
             onClick={() => setOpen(false)}
           >
             <img src="/my-logo.png" alt="My Logo" className="h-full w-full object-contain" />
