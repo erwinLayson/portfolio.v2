@@ -49,14 +49,16 @@ function HeroSection() {
       </div>
 
       <div className="flex items-center justify-center">
-        <div className="relative h-52 w-52 overflow-hidden rounded-full border-2 border-[var(--color-border-default)] sm:h-72 sm:w-72 lg:h-96 lg:w-96">
-          <img
-            src={me}
-            alt="Portrait of Erwin B. Layson"
-            className="h-full w-full object-cover"
-          />
-          {/* Subtle brand accent ring */}
-          <div className="absolute inset-0 rounded-full border-2 border-[var(--color-accent-primary)]/20" />
+        <div className="animate-float relative h-52 w-52 sm:h-72 sm:w-72 lg:h-96 lg:w-96">
+          {/* Rotating gradient ring */}
+          <div className="animate-spin-slow absolute -inset-1 rounded-full bg-[var(--color-accent-gradient)] opacity-20" />
+          <div className="relative h-full w-full overflow-hidden rounded-full border-2 border-[var(--color-border-default)]">
+            <img
+              src={me}
+              alt="Portrait of Erwin B. Layson"
+              className="h-full w-full object-cover"
+            />
+          </div>
         </div>
       </div>
     </section>

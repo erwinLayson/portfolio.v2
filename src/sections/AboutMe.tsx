@@ -23,7 +23,7 @@ export default function AboutMe() {
         </div>
       </Reveal>
 
-      <Reveal className="mt-14 grid grid-cols-2 gap-3 sm:gap-4" delay={100}>
+      <Reveal className="mt-14 grid grid-cols-4 gap-3 sm:gap-4" delay={100}>
         {aboutStats.map((stat) => (
           <div key={stat.label} className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] p-5">
             <dt className="text-xs font-medium text-[var(--color-text-muted)]">{stat.label}</dt>
