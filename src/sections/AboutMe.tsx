@@ -13,33 +13,30 @@ export default function AboutMe() {
       />
 
       <Reveal className="max-w-3xl">
-        <div className="space-y-4 leading-relaxed text-zinc-600">
+        <div className="space-y-5 text-[15px] leading-[1.7] text-[var(--color-text-secondary)] sm:text-base">
           <p>
-            Hi, I'm <span className="font-semibold text-zinc-900">{profile.name}</span> — a{" "}
-            {profile.role} based in {profile.location}.
+            I'm <span className="font-semibold text-[var(--color-text-primary)]">{profile.name}</span>, a {profile.role.toLowerCase()} focused on building practical web applications with React, TypeScript, Node.js, and MySQL.
           </p>
-          <p>{profile.tagline}</p>
           <p>
-            I enjoy turning complex problems into simple, beautiful interfaces, and I care
-            about writing code that is easy to read, maintain, and scale.
+            I enjoy turning real-world problems into reliable, maintainable software and continuously improving my skills through real projects.
           </p>
         </div>
       </Reveal>
 
-      <Reveal className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4" delay={100}>
+      <Reveal className="mt-14 grid grid-cols-2 gap-3 sm:gap-4" delay={100}>
         {aboutStats.map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-zinc-200 p-6">
-            <dt className="text-sm text-zinc-500">{stat.label}</dt>
-            <dd className="mt-1 text-xl font-semibold text-zinc-900">{stat.value}</dd>
+          <div key={stat.label} className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] p-5">
+            <dt className="text-xs font-medium text-[var(--color-text-muted)]">{stat.label}</dt>
+            <dd className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">{stat.value}</dd>
           </div>
         ))}
         {profile.openToWork && (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
-            <dt className="text-sm text-emerald-600">Status</dt>
-            <dd className="mt-1 flex items-center gap-2 text-xl font-semibold text-emerald-700">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+          <div className="rounded-xl border border-[var(--color-status-open-border)] bg-[var(--color-status-open-bg)] p-5">
+            <dt className="text-xs font-medium text-[var(--color-status-open)]">Status</dt>
+            <dd className="mt-1 flex items-center gap-2 text-lg font-semibold text-[var(--color-status-open)]">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-status-open)]/75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-status-open)]"></span>
               </span>
               Open to work
             </dd>
@@ -47,7 +44,7 @@ export default function AboutMe() {
         )}
       </Reveal>
 
-      <Reveal className="mt-12 flex gap-5 text-zinc-400" delay={200}>
+      <Reveal className="mt-12 flex gap-5 text-[var(--color-text-muted)]" delay={200}>
         {socials.map((social) => (
           <a
             key={social.name}
@@ -55,7 +52,7 @@ export default function AboutMe() {
             target="_blank"
             rel="noreferrer"
             aria-label={social.name}
-            className="transition-colors hover:text-zinc-900"
+            className="transition-colors hover:text-[var(--color-accent-primary)]"
           >
             {social.icon === "github" && <GitHubIcon className="h-6 w-6" />}
             {social.icon === "linkedin" && <LinkedInIcon className="h-6 w-6" />}

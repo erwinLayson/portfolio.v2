@@ -5,7 +5,7 @@
 import { profile } from "./profile";
 
 export const aboutStats = [
-  { label: "Experience", value: "3+ years" },
-  { label: "Projects Shipped", value: "10+" },
+  { label: "Experience", value: "0+ years" },
+  { label: "Projects", value: "3" },
   { label: "Location", value: profile.location },
 ];

@@ -7,14 +7,19 @@ export type Experience = {
 
 export default function ExperienceItem({ role, company, period, points }: Experience) {
   return (
-    <div className="grid gap-2 border-l-2 border-zinc-200 pb-10 pl-6 sm:grid-cols-[140px_1fr] sm:gap-8 last:pb-0">
-      <p className="pt-0.5 text-sm text-zinc-500">{period}</p>
+    <div className="relative grid gap-3 border-l-2 border-[var(--color-border-default)] pb-12 pl-6 sm:grid-cols-[160px_1fr] sm:gap-10 last:pb-0">
+      {/* Timeline dot */}
+      <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-[var(--color-accent-primary)]" />
+      <p className="text-sm font-medium text-[var(--color-text-muted)]">{period}</p>
       <div>
-        <h3 className="font-semibold text-zinc-900">{role}</h3>
-        <p className="mt-0.5 text-sm text-zinc-500">{company}</p>
-        <ul className="mt-3 list-disc space-y-1.5 pl-4 text-sm leading-relaxed text-zinc-600">
+        <h3 className="text-[17px] font-bold leading-snug text-[var(--color-text-primary)] sm:text-lg">{role}</h3>
+        <p className="mt-1 text-sm text-[var(--color-accent-primary)]">{company}</p>
+        <ul className="mt-5 space-y-3 text-[14px] leading-relaxed text-[var(--color-text-secondary)] sm:text-sm">
           {points.map((point) => (
-            <li key={point}>{point}</li>
+            <li key={point} className="flex gap-3">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-border-emphasis)]" />
+              <span>{point}</span>
+            </li>
           ))}
         </ul>
       </div>

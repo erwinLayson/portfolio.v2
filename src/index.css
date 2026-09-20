@@ -2,11 +2,75 @@
 
 @import "tailwindcss";
 
+:root {
+  --color-primary-dark: #050912;
+  --color-primary-white: #F5F7FA;
+  --color-brand-blue: #1683F7;
+  --color-accent-cyan: #18B9E8;
+  --color-neutral-gray: #C9CED6;
+
+  --color-bg-primary: var(--color-primary-dark);
+  --color-bg-secondary: #0A0F1A;
+  --color-bg-card: #0D131E;
+  --color-bg-elevated: #111826;
+
+  --color-text-primary: var(--color-primary-white);
+  --color-text-secondary: var(--color-neutral-gray);
+  --color-text-muted: #8B939E;
+  --color-text-inverse: var(--color-primary-dark);
+
+  --color-border-subtle: #1A2230;
+  --color-border-default: #252D3D;
+  --color-border-emphasis: #303A4E;
+
+  --color-accent-primary: var(--color-brand-blue);
+  --color-accent-secondary: var(--color-accent-cyan);
+  --color-accent-gradient: linear-gradient(135deg, var(--color-brand-blue) 0%, var(--color-accent-cyan) 100%);
+
+  --color-status-open: #10B981;
+  --color-status-open-bg: rgba(16, 185, 129, 0.1);
+  --color-status-open-border: rgba(16, 185, 129, 0.2);
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
   font-family: "Space Grotesk", sans-serif;
-  @apply bg-white text-zinc-900 antialiased;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: var(--color-brand-blue);
+  color: var(--color-primary-white);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-blue);
+  outline-offset: 2px;
+}
+
+@layer base {
+  a {
+    color: var(--color-brand-blue);
+    transition: color 0.2s ease;
+  }
+
+  a:hover {
+    color: var(--color-accent-cyan);
+  }
+}
+
+::placeholder {
+  color: var(--color-text-muted);
 }

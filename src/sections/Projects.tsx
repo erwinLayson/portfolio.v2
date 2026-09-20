@@ -21,14 +21,14 @@ export default function Projects() {
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <section id="projects" className="scroll-mt-24 bg-zinc-50 py-24">
+    <section id="projects" className="scroll-mt-24 bg-[var(--color-bg-secondary)] py-24">
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeading
           title="Projects"
           subtitle="A selection of things I've designed, built, and shipped."
         />
 
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
           {pageProjects.map((project, index) => (
             <Reveal key={project.title} className="h-full" delay={(index % 2) * 75}>
               <ProjectCard
@@ -51,7 +51,7 @@ export default function Projects() {
             type="button"
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
-            className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-border-emphasis)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             Previous
           </button>
@@ -64,8 +64,8 @@ export default function Projects() {
               aria-current={page === currentPage ? "page" : undefined}
               className={`h-10 w-10 rounded-xl text-sm font-medium transition-colors ${
                 page === currentPage
-                  ? "bg-zinc-900 text-white"
-                  : "border border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900"
+                  ? "bg-[var(--color-accent-primary)] text-[var(--color-primary-white)]"
+                  : "border border-[var(--color-border-default)] bg-[var(--color-bg-card)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-emphasis)] hover:text-[var(--color-text-primary)]"
               }`}
             >
               {page}
@@ -76,7 +76,7 @@ export default function Projects() {
             type="button"
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-border-emphasis)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
           </button>

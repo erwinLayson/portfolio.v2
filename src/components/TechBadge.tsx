@@ -48,17 +48,15 @@ export default function TechBadge({ label }: TechBadgeProps) {
   const Icon = meta?.icon;
 
   return (
-    <div className="group flex min-w-0 items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-lg hover:shadow-zinc-200/70">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-100 bg-zinc-50 transition-transform duration-300 group-hover:scale-110">
-        {Icon && (
-          <Icon
-            className="h-5 w-5"
-            style={{ color: meta?.color }}
-            aria-hidden="true"
-          />
-        )}
-      </span>
-      <span className="truncate text-sm font-semibold text-zinc-800">
+    <div className="group flex min-w-0 items-center gap-3 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-card)] px-3.5 py-3 transition-all duration-200 hover:border-[var(--color-border-emphasis)]">
+      {Icon && (
+        <Icon
+          className="h-[18px] w-[18px] shrink-0"
+          style={{ color: meta?.color }}
+          aria-hidden="true"
+        />
+      )}
+      <span className="truncate text-[13px] font-medium text-[var(--color-text-secondary)] sm:text-sm">
         {label}
       </span>
     </div>

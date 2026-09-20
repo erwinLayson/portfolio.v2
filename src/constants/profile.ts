@@ -8,8 +8,9 @@ export const profile = {
   name: "Erwin B. Layson",
   role: "Full-Stack Web Developer",
   tagline:
-    "A Full-Stack Web Developer dedicated to creating clean, efficient, and reliable web solutions using modern technologies.",
-  email: "erwinlayson@example.com", // TODO: replace with your real email
+    "I build modern, reliable web applications.",
+  techHighlights: ["React", "TypeScript", "Node.js", "MySQL"],
+  email: "laysonerwin97@gmail.com", // TODO: replace with your real email
   location: "Philippines",
   openToWork: true,
 };
