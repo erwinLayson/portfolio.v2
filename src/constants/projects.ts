@@ -45,7 +45,7 @@ export const projects: Project[] = [
     image: "osas.png",
     tech: ["React", "Tailwind CSS", "JavaScript", "Node.js", "Express", "MySQL"],
     github: "https://github.com/erwinLayson/Scholarship-Application-and-Management-System.git",
-    demo: "https://erwinlayson.github.io/Scholarship-Application-and-Management-System/",
+    demo: "",
   },
   {
     title: "P2P Bus Tracking System",
@@ -53,7 +53,7 @@ export const projects: Project[] = [
       "A real-time bus tracking system for point-to-point routes: passengers follow buses on a live map, drivers broadcast their location and manage routes, and admins oversee drivers and the fleet.",
     image: 'p2p.png',
     tech: ["React", "Tailwind CSS", "Socket.IO", "JavaScript", "Node.js", "Leaflet", "Express", "MongoDB"],
-    demo: "https://erwinlayson.github.io/P2P-bus-tracking-system-client-side/",
+    demo: "",
     github: "https://github.com/erwinLayson/P2P-bus-tracking-system-client-side.git",
   }
 ];
