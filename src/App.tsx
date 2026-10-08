@@ -5,6 +5,7 @@ import TechStack from "./sections/TechStack";
 import Experience from "./sections/Experience";
 import Projects from "./sections/Projects";
 import ContactMe from "./sections/ContactMe";
+import Footer from "./components/Footer";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Projects />
         <ContactMe />
       </main>
+      <Footer />
     </>
   );
 }
