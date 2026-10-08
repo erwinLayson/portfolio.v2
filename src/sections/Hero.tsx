@@ -1,5 +1,6 @@
 import me from "../assets/me.png";
 import { profile } from "../constants/profile";
+import "../style/HeroProfile.css";
 
 function HeroSection() {
   return (
@@ -52,11 +53,17 @@ function HeroSection() {
         <div className="animate-float relative h-52 w-52 sm:h-72 sm:w-72 lg:h-96 lg:w-96">
           {/* Rotating gradient ring */}
           <div className="animate-spin-slow absolute -inset-1 rounded-full bg-[var(--color-accent-gradient)] opacity-20" />
-          <div className="relative h-full w-full overflow-hidden">
+
+          {/* Frosted glass frame */}
+          <div className="glass-frame" aria-hidden="true">
+            {/* Shine sweep */}
+            <div className="glass-shine" />
+
+            {/* Portrait image */}
             <img
               src={me}
               alt="Portrait of Erwin B. Layson"
-              className="h-full w-full object-cover"
+              className="profile-img"
             />
           </div>
         </div>
