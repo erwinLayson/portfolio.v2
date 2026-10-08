@@ -1,4 +1,4 @@
-import me from "../assets/me.jpg";
+import me from "../assets/me.png";
 import { profile } from "../constants/profile";
 
 function HeroSection() {
@@ -52,7 +52,7 @@ function HeroSection() {
         <div className="animate-float relative h-52 w-52 sm:h-72 sm:w-72 lg:h-96 lg:w-96">
           {/* Rotating gradient ring */}
           <div className="animate-spin-slow absolute -inset-1 rounded-full bg-[var(--color-accent-gradient)] opacity-20" />
-          <div className="relative h-full w-full overflow-hidden rounded-full border-2 border-[var(--color-border-default)]">
+          <div className="relative h-full w-full overflow-hidden">
             <img
               src={me}
               alt="Portrait of Erwin B. Layson"
