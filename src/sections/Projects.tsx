@@ -1,16 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { projects, getProjectImage } from "../constants/projects";
 import SectionHeading from "../components/SectionHeading";
 import ProjectCard from "../components/ProjectCard";
 import Reveal from "../components/Reveal";
 
-const PER_PAGE = 4;
+const PER_PAGE_LARGE = 4;
+const PER_PAGE_MOBILE = 2;
 
 export default function Projects() {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(projects.length / PER_PAGE);
-  const start = (currentPage - 1) * PER_PAGE;
-  const pageProjects = projects.slice(start, start + PER_PAGE);
+
+  const perPage = typeof window !== "undefined" && window.innerWidth >= 640 ? PER_PAGE_LARGE : PER_PAGE_MOBILE;
+  const totalPages = Math.ceil(projects.length / perPage);
+  const start = (currentPage - 1) * perPage;
+  const pageProjects = projects.slice(start, start + perPage);
+
+  // Reset to page 1 when crossing the breakpoint so the user never lands on an
+  // empty page after resizing (either direction).
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 640px)");
+    const handleChange = () => setCurrentPage(1);
+    mql.addEventListener("change", handleChange);
+    return () => mql.removeEventListener("change", handleChange);
+  }, []);
 
   const goToPage = (page: number) => {
     if (page < 1 || page > totalPages) return;

@@ -8,6 +8,7 @@ import {
   MenuIcon,
 } from "./icons";
 import { socials } from "../constants/profile";
+import { scrollToSection } from "../utils/scrollToSection";
 
 const links = [
   { label: "About", href: "#about" },
@@ -51,7 +52,11 @@ export default function Navbar() {
           <a
             href="#hero-section"
             className="flex h-16 w-16 items-center justify-center rounded-full overflow-hidden"
-            onClick={() => setOpen(false)}
+            onClick={(event) => {
+              event.preventDefault();
+              scrollToSection("hero-section");
+              setOpen(false);
+            }}
           >
             <img src="/my-logo.png" alt="My Logo" className="h-full w-full object-contain" />
           </a>
@@ -62,6 +67,10 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 className="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-accent-primary)]"
+                onClick={(event) => {
+                  event.preventDefault();
+                  scrollToSection(link.href.slice(1));
+                }}
               >
                 {link.label}
               </a>
@@ -122,7 +131,11 @@ export default function Navbar() {
               <a
                 key={link.href}
                 href={link.href}
-                onClick={() => setOpen(false)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  scrollToSection(link.href.slice(1));
+                  setOpen(false);
+                }}
                 className={`flex items-center justify-between border-b border-[var(--color-border-subtle)] py-4 text-base font-medium text-[var(--color-text-secondary)] transition-all duration-300 hover:text-[var(--color-accent-primary)] ${
                   open ? "translate-x-0 opacity-100" : "translate-x-6 opacity-0"
                 }`}
