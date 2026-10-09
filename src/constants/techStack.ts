@@ -5,14 +5,18 @@
 export const techStack = [
   {
     category: "Frontend",
-    items: ["React", "TypeScript", "Tailwind CSS", "Vite", "HTML", "CSS"],
+    items: ["React", "TypeScript", "Tailwind CSS", "Vite", "HTML", "CSS", "Bootstrap"],
   },
   {
     category: "Backend",
-    items: ["Node.js", "Express", "PostgreSQL", "MongoDB", "REST APIs"],
+    items: ["Node.js", "Express", "MongoDB", "REST APIs", "PHP", "CodeIgniter", "Laravel"],
   },
   {
     category: "Tools & Workflow",
-    items: ["Git", "GitHub", "Figma", "Postman", "VS Code"],
+    items: ["Git", "GitHub", "Canva", "Postman", "VS Code"],
   },
+  {
+    category: "Deployment",
+    items: ["Vercel", "TiDB", "Render", "Docker", "Netlify"]
+  }
 ];

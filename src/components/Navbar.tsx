@@ -103,18 +103,18 @@ export default function Navbar() {
           onClick={() => setOpen(false)}
         />
 
-        {/* Slide-in panel */}
-        <aside
+        {/* Dropdown from top */}
+        <div
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
-          className={`absolute inset-y-0 right-0 flex w-72 max-w-[85%] flex-col border-l border-[var(--color-border-default)] bg-[var(--color-bg-primary)] shadow-2xl transition-transform duration-300 ease-out ${
-            open ? "translate-x-0" : "translate-x-full"
+          className={`absolute top-14 left-4 right-4 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-default)] shadow-2xl transition-all duration-300 ${
+            open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
           }`}
         >
-          <div className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border-default)] px-6">
-            <span className="text-lg font-bold tracking-tight text-[var(--color-text-primary)]">
-              EL<span className="text-[var(--color-text-muted)]">.</span>
+          <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--color-border-default)] px-4">
+            <span className="text-base font-bold tracking-tight text-[var(--color-text-primary)]">
+              Menu
             </span>
             <button
               type="button"
@@ -126,8 +126,8 @@ export default function Navbar() {
             </button>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-6 py-4">
-            {links.map((link, index) => (
+          <nav className="flex flex-col gap-2 overflow-y-auto px-6 py-4">
+            {links.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -136,20 +136,14 @@ export default function Navbar() {
                   scrollToSection(link.href.slice(1));
                   setOpen(false);
                 }}
-                className={`flex items-center justify-between border-b border-[var(--color-border-subtle)] py-4 text-base font-medium text-[var(--color-text-secondary)] transition-all duration-300 hover:text-[var(--color-accent-primary)] ${
-                  open ? "translate-x-0 opacity-100" : "translate-x-6 opacity-0"
-                }`}
-                style={{ transitionDelay: open ? `${index * 40}ms` : "0ms" }}
+                className="flex items-center border-b border-[var(--color-border-subtle)] py-3 text-base font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-accent-primary)]"
               >
                 {link.label}
-                <span className="text-xs font-semibold tracking-widest text-[var(--color-text-muted)]">
-                  0{index + 1}
-                </span>
               </a>
             ))}
           </nav>
 
-          <div className="shrink-0 border-t border-[var(--color-border-default)] px-3 py-4">
+          <div className="border-t border-[var(--color-border-default)] px-3 py-3">
             {socials.map((social) => {
               const Icon = socialIcons[social.icon];
               return (
@@ -158,7 +152,7 @@ export default function Navbar() {
                   href={social.url}
                   target={social.url.startsWith("http") ? "_blank" : undefined}
                   rel={social.url.startsWith("http") ? "noreferrer" : undefined}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-accent-primary)]"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-accent-primary)]"
                 >
                   {Icon && <Icon className="h-4 w-4" aria-hidden="true" />}
                   <span className="flex-1">{social.name}</span>
@@ -170,7 +164,7 @@ export default function Navbar() {
               );
             })}
           </div>
-        </aside>
+        </div>
       </div>
     </>
   );

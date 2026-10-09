@@ -14,6 +14,14 @@ import {
   SiTailwindcss,
   SiTypescript,
   SiVite,
+  SiVercel,
+  SiRender,
+  SiDocker,
+  SiLaravel,
+  SiCodeigniter,
+  SiPhp,
+  SiNetlify,
+  SiTidb
 } from "react-icons/si";
 import { TbApi } from "react-icons/tb";
 import { VscVscode } from "react-icons/vsc";
@@ -37,6 +45,16 @@ const techMeta: Record<string, { icon: IconType; color: string }> = {
   Figma: { icon: SiFigma, color: "#F24E1E" },
   Postman: { icon: SiPostman, color: "#FF6C37" },
   "VS Code": { icon: VscVscode, color: "#007ACC" },
+  Bootstrap: { icon: SiHtml5, color: "#7952B3" },
+  Canva: { icon: SiFigma, color: "#00C4CC" },
+  PHP: { icon: SiPhp, color: "#777BB4" },
+  CodeIgniter: { icon: SiCodeigniter, color: "#EE6C62" },
+  Laravel: { icon: SiLaravel, color: "#FF2D20" },
+  "TiDB": { icon: SiTidb, color: "#FF2D20" },
+  Vercel: { icon: SiVercel, color: "#000000" },
+  Render: { icon: SiRender, color: "#46E3B7" },
+  Docker: { icon: SiDocker, color: "#2496ED" },
+  Netlify: { icon: SiNetlify, color: "#00AD9F" },
 };
 
 type TechBadgeProps = {
