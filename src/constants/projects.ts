@@ -55,5 +55,14 @@ export const projects: Project[] = [
     tech: ["React", "Tailwind CSS", "Socket.IO", "JavaScript", "Node.js", "Leaflet", "Express", "MongoDB"],
     demo: "",
     github: "https://github.com/erwinLayson/P2P-bus-tracking-system-client-side.git",
+  },
+  {
+    title: "Salonease ",
+    description:
+      "An Online Appointment Booking and Management System for Raheem Make Up Studio and Salon",
+    image: 'salonease.png',
+    tech: ["React", "Tailwind CSS",  "TypeScript", "Node.js", "Express", "MySql"],
+    demo: "https://salonease-seven.vercel.app/",
+    github: "https://github.com/erwinLayson/salonease",
   }
 ];
