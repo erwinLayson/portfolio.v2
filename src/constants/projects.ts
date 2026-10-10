@@ -45,7 +45,7 @@ export const projects: Project[] = [
     image: "osas.png",
     tech: ["React", "Tailwind CSS", "JavaScript", "Node.js", "Express", "MySQL"],
     github: "https://github.com/erwinLayson/Scholarship-Application-and-Management-System.git",
-    demo: "",
+    demo: "https://osas-frontend.vercel.app/home",
   },
   {
     title: "P2P Bus Tracking System",
