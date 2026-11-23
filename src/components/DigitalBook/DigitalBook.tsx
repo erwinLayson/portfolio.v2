@@ -3,6 +3,7 @@ import { bookChapters } from "./bookData";
 import BookPageSpread from "./BookPageSpread";
 import LeftPageContent from "./LeftPageContent";
 import RightPageContent from "./RightPageContent";
+import Pagination from "../Pagination";
 import "./DigitalBook.css";
 
 type FlipState = {
@@ -130,7 +131,7 @@ export default function DigitalBook() {
       {/* ========================================================= */}
       <div className="mb-6 flex flex-col items-center justify-between gap-4 md:flex-row">
         {/* Chapter Selection Ribbon */}
-        <div className="flex w-full items-center gap-2 overflow-x-auto pb-2 scrollbar-none md:w-auto md:pb-0">
+        <div className="flex w-full items-center gap-2 overflow-x-auto px-1 py-1 scrollbar-none sm:justify-center md:w-auto md:px-0 md:py-0">
           {bookChapters.map((ch, idx) => (
             <button
               key={ch.id}
@@ -279,66 +280,16 @@ export default function DigitalBook() {
       {/* ========================================================= */}
       {/* BOTTOM NAVIGATION CONTROLS & PROGRESS INDICATOR */}
       {/* ========================================================= */}
-      <div className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
-        {/* Previous Button */}
-        <button
-          type="button"
-          onClick={handlePrev}
-          disabled={currentChapterIdx === 0 || isFlipping}
-          className={`flex items-center gap-2 rounded-full border border-[var(--color-border-default)] px-5 py-2.5 text-sm font-semibold transition-all ${
-            currentChapterIdx === 0 || isFlipping
-              ? "cursor-not-allowed opacity-30 text-[var(--color-text-muted)]"
-              : "bg-[var(--color-bg-card)] text-[var(--color-text-primary)] hover:border-[var(--color-accent-primary)] hover:bg-[var(--color-bg-elevated)] hover:shadow-md"
-          }`}
-          aria-label="Previous Chapter"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Previous Page</span>
-        </button>
-
-        {/* Center Progress Dots & Page Indicator */}
-        <div className="flex flex-col items-center gap-1.5">
-          <div className="flex items-center gap-2">
-            {bookChapters.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                disabled={isFlipping}
-                onClick={() => handleSelectChapter(idx)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
-                  idx === currentChapterIdx
-                    ? "w-8 bg-gradient-to-r from-[var(--color-brand-blue)] to-[var(--color-accent-cyan)] shadow-sm shadow-[var(--color-accent-cyan)]/50"
-                    : "w-2.5 bg-[var(--color-border-emphasis)] hover:bg-[var(--color-text-muted)]"
-                }`}
-                aria-label={`Jump to page ${idx + 1}`}
-              />
-            ))}
-          </div>
-          <span className="text-xs font-medium text-[var(--color-text-muted)]">
-            Chapter {currentChapter.chapterNumber} of {total} &bull; Pages {currentChapter.chapterNumber * 2 - 1}–{currentChapter.chapterNumber * 2}
-          </span>
-        </div>
-
-        {/* Next Button */}
-        <button
-          type="button"
-          onClick={handleNext}
-          disabled={currentChapterIdx === total - 1 || isFlipping}
-          className={`flex items-center gap-2 rounded-full border border-[var(--color-border-default)] px-5 py-2.5 text-sm font-semibold transition-all ${
-            currentChapterIdx === total - 1 || isFlipping
-              ? "cursor-not-allowed opacity-30 text-[var(--color-text-muted)]"
-              : "bg-[var(--color-accent-primary)] text-[var(--color-primary-white)] hover:bg-[var(--color-accent-secondary)] hover:shadow-lg hover:shadow-[var(--color-accent-primary)]/30"
-          }`}
-          aria-label="Next Chapter"
-        >
-          <span>Next Page</span>
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
+      <Pagination
+        currentPage={currentChapterIdx + 1}
+        totalPages={total}
+        disabled={isFlipping}
+        onPageChange={(page) => handleSelectChapter(page - 1)}
+        prevLabel="Previous Page"
+        nextLabel="Next Page"
+        indicatorLabel={`Chapter ${currentChapter.chapterNumber} of ${total} • Pages ${currentChapter.chapterNumber * 2 - 1}–${currentChapter.chapterNumber * 2}`}
+        ariaLabel="Experience chapters pagination"
+      />
     </div>
   );
 }

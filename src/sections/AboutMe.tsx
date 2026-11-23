@@ -23,18 +23,21 @@ export default function AboutMe() {
         </div>
       </Reveal>
 
-      <Reveal className="mt-14 grid grid-cols-4 gap-3 sm:gap-4" delay={100}>
+      <Reveal className="mt-14 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4" delay={100}>
         {aboutStats.map((stat) => (
-          <div key={stat.label} className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] p-5">
+          <div
+            key={stat.label}
+            className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] p-4 transition-all hover:border-[var(--color-border-emphasis)] sm:p-5"
+          >
             <dt className="text-xs font-medium text-[var(--color-text-muted)]">{stat.label}</dt>
-            <dd className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">{stat.value}</dd>
+            <dd className="mt-1.5 text-base font-semibold text-[var(--color-text-primary)] sm:text-lg">{stat.value}</dd>
           </div>
         ))}
         {profile.openToWork && (
-          <div className="rounded-xl border border-[var(--color-status-open-border)] bg-[var(--color-status-open-bg)] p-5">
+          <div className="rounded-xl border border-[var(--color-status-open-border)] bg-[var(--color-status-open-bg)] p-4 sm:p-5">
             <dt className="text-xs font-medium text-[var(--color-status-open)]">Status</dt>
-            <dd className="mt-1 flex items-center gap-2 text-lg font-semibold text-[var(--color-status-open)]">
-              <span className="relative flex h-2 w-2">
+            <dd className="mt-1.5 flex items-center gap-2 text-base font-semibold text-[var(--color-status-open)] sm:text-lg whitespace-nowrap">
+              <span className="relative flex h-2 w-2 shrink-0">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-status-open)]/75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-status-open)]"></span>
               </span>

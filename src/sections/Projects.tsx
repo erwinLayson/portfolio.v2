@@ -3,6 +3,7 @@ import { projects, getProjectImage } from "../constants/projects";
 import SectionHeading from "../components/SectionHeading";
 import ProjectCard from "../components/ProjectCard";
 import Reveal from "../components/Reveal";
+import Pagination from "../components/Pagination";
 
 const PER_PAGE_LARGE = 4;
 const PER_PAGE_MOBILE = 2;
@@ -30,8 +31,6 @@ export default function Projects() {
     document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
-
   return (
     <section id="projects" className="scroll-mt-24 bg-[var(--color-bg-secondary)] py-24">
       <div className="mx-auto max-w-6xl px-6">
@@ -55,44 +54,15 @@ export default function Projects() {
           ))}
         </div>
 
-        <nav
-          aria-label="Projects pagination"
-          className="mt-12 flex items-center justify-center gap-2"
-        >
-          <button
-            type="button"
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-border-emphasis)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Previous
-          </button>
-
-          {pageNumbers.map((page) => (
-            <button
-              key={page}
-              type="button"
-              onClick={() => goToPage(page)}
-              aria-current={page === currentPage ? "page" : undefined}
-              className={`h-10 w-10 rounded-xl text-sm font-medium transition-colors ${
-                page === currentPage
-                  ? "bg-[var(--color-accent-primary)] text-[var(--color-primary-white)]"
-                  : "border border-[var(--color-border-default)] bg-[var(--color-bg-card)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-emphasis)] hover:text-[var(--color-text-primary)]"
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-
-          <button
-            type="button"
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-border-emphasis)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next
-          </button>
-        </nav>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+          prevLabel="Previous"
+          nextLabel="Next"
+          indicatorLabel={`Page ${currentPage} of ${totalPages}`}
+          ariaLabel="Projects pagination"
+        />
       </div>
     </section>
   );

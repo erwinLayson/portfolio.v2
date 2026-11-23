@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { gallery, type GalleryImage } from "../constants/gallery";
 import SectionHeading from "./SectionHeading";
+import Pagination from "./Pagination";
 
 const PER_PAGE_MOBILE = 3;
 const PER_PAGE_SM = 6;
@@ -80,8 +81,6 @@ export default function Gallery() {
     document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
-
   return (
     <section
       id="gallery"
@@ -105,58 +104,15 @@ export default function Gallery() {
           ))}
         </div>
 
-        {totalPages > 1 && (
-          <nav
-            aria-label="Gallery pagination"
-            className="mt-12 flex flex-row items-center justify-center gap-3"
-          >
-            <button
-              type="button"
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-border-emphasis)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Previous
-            </button>
-
-            <div
-              className="overflow-x-auto max-h-[80px] w-full
-                max-w-[90%] sm:max-w-[90%] lg:max-w-[50%]
-                flex items-center justify-center rounded-xl
-                border border-[var(--color-border-default)]
-                bg-[var(--color-bg-card)] px-2 py-1
-              "
-              style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(24,185,232,0.5) rgba(10,15,26,0.6)" }}
-            >
-              <div className="flex items-center gap-2">
-                {pageNumbers.map((page) => (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => goToPage(page)}
-                    aria-current={page === currentPage ? "page" : undefined}
-                    className={`h-10 w-10 rounded-xl text-sm font-medium transition-colors flex-shrink-0 ${
-                      page === currentPage
-                        ? "bg-[var(--color-accent-primary)] text-[var(--color-primary-white)]"
-                        : "border border-[var(--color-border-default)] bg-[var(--color-bg-card)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-emphasis)] hover:text-[var(--color-text-primary)]"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-border-emphasis)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Next
-            </button>
-          </nav>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+          prevLabel="Previous"
+          nextLabel="Next"
+          indicatorLabel={`Page ${currentPage} of ${totalPages}`}
+          ariaLabel="Gallery pagination"
+        />
       </div>
     </section>
   );
