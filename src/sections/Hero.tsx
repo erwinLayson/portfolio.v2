@@ -38,10 +38,12 @@ function HeroSection() {
               View Projects
             </a>
             <a
-              href="#contact"
+              href="/resume"
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-full border border-[var(--color-accent-primary)] px-7 py-3 text-sm font-semibold text-[var(--color-accent-primary)] transition-all duration-300 hover:bg-[var(--color-accent-primary)] hover:text-[var(--color-primary-white)]"
             >
-              Contact Me
+              View Resume
             </a>
           </div>
         </div>
