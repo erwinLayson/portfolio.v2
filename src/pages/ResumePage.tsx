@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { profile, socials } from "../constants/profile";
-import { techStack } from "../constants/techStack";
 import { experience } from "../constants/experience";
-import { projects } from "../constants/projects";
 import {
-  ArrowUpRightIcon,
   CheckIcon,
   CopyIcon,
   GitHubIcon,
@@ -12,14 +9,71 @@ import {
   MailIcon,
 } from "../components/icons";
 
+const technicalSkills = [
+  {
+    category: "Frontend Development",
+    skills: "React, TypeScript, JavaScript, Tailwind CSS, Vite, HTML5, CSS3, Bootstrap",
+  },
+  {
+    category: "Backend Development",
+    skills: "Node.js, Express.js, PHP, RESTful API Development",
+  },
+  {
+    category: "Databases",
+    skills: "MySQL, TiDB, MongoDB, PostgreSQL",
+  },
+  {
+    category: "Architecture & Security",
+    skills: "MVC Architecture, Role-Based Access Control (RBAC), Authentication, Authorization, Relational Database Design",
+  },
+  {
+    category: "Tools & Development Workflow",
+    skills: "Git, GitHub, Postman, VS Code, Docker, Docker Compose",
+  },
+  {
+    category: "Testing & Deployment",
+    skills: "Unit Testing, Debugging, Vercel, Render, Netlify",
+  },
+];
+
+const resumeProjects = [
+  {
+    title: "GRADESYNC — SCHOOL MANAGEMENT SYSTEM",
+    technologies: "React, TypeScript, Tailwind CSS, Node.js, Express.js, MySQL, TiDB",
+    demo: "https://grade-sync-client-side.vercel.app/",
+    github: "https://github.com/erwinLayson/gradeSync-client-side",
+    points: [
+      "Led the development of a school management platform with dedicated administrator, teacher, and student portals.",
+      "Implemented student enrollment, attendance tracking, gradebook management, and academic reporting workflows.",
+      "Developed RESTful APIs, authentication, protected routes, and role-based access control to manage user permissions.",
+    ],
+  },
+  {
+    title: "OSAS — SCHOLARSHIP APPLICATION AND MANAGEMENT SYSTEM",
+    technologies: "React, Tailwind CSS, JavaScript, Node.js, Express.js, MySQL",
+    demo: "https://osas-frontend.vercel.app/home",
+    github: "https://github.com/erwinLayson/Scholarship-Application-and-Management-System",
+    points: [
+      "Developed a university scholarship management portal enabling students to browse programs, submit digital applications, and monitor evaluation progress online.",
+      "Built administrative management modules for staff to review student submissions, verify documentation, manage scholarship quotas, and generate reports.",
+      "Implemented authentication, form validation, and relational MySQL database schemas to ensure data integrity across application records.",
+    ],
+  },
+  {
+    title: "SALONEASE — APPOINTMENT BOOKING AND MANAGEMENT SYSTEM",
+    technologies: "React, TypeScript, Tailwind CSS, Node.js, Express.js, MySQL",
+    demo: "https://salonease-seven.vercel.app/",
+    github: "https://github.com/erwinLayson/salonease",
+    points: [
+      "Developed an online appointment booking and scheduling system for salon clients and service staff.",
+      "Implemented real-time service selection, calendar-based appointment scheduling, and automated booking status management.",
+      "Built role-based administrative dashboards for salon staff to manage service catalogs, monitor client bookings, and streamline daily operations.",
+    ],
+  },
+];
+
 export default function ResumePage() {
   const [copied, setCopied] = useState(false);
-
-  // Group technologies by standard categories for ATS parsing
-  const frontendSkills = techStack.find((g) => g.category === "Frontend")?.items ?? [];
-  const backendSkills = techStack.find((g) => g.category === "Backend")?.items ?? [];
-  const toolsSkills = techStack.find((g) => g.category === "Tools & Workflow")?.items ?? [];
-  const deploySkills = techStack.find((g) => g.category === "Deployment")?.items ?? [];
 
   const handlePrint = () => {
     window.print();
@@ -35,47 +89,48 @@ LinkedIn: https://www.linkedin.com/in/erwinlayson | GitHub: https://github.com/e
 ==================================================
 PROFESSIONAL SUMMARY
 ==================================================
-Dedicated and detail-oriented Full-Stack Web Developer with a strong foundation in building scalable, reliable, and user-centric web applications. Proficient in React, TypeScript, Node.js, Express.js, and SQL/NoSQL databases (MySQL, TiDB, PostgreSQL, MongoDB). Proven leadership as Capstone Project Leader and Programmer, delivering production-ready platforms including school management systems (GradeSync), university scholarship portals (OSAS), appointment booking platforms (Salonease), and real-time tracking systems (P2P Bus Tracking). Experienced in RESTful API development, Role-Based Access Control (RBAC), Docker containerization, and modern deployment pipelines (Vercel, Render).
+Full-Stack Web Developer with hands-on experience designing, developing, and deploying database-driven web applications using React, TypeScript, Node.js, Express.js, and MySQL. Experienced in building RESTful APIs, implementing authentication and role-based access control (RBAC), designing relational database structures, and developing end-to-end business workflows. Led the development of a school management capstone system and contributed to multiple software projects involving academic management, scholarship applications, appointment booking, and real-time tracking. Familiar with Docker, cloud database deployment, software testing, and application maintenance.
 
 ==================================================
 TECHNICAL SKILLS
 ==================================================
-• Frontend: ${frontendSkills.join(", ")}
-• Backend & APIs: ${backendSkills.join(", ")}
-• Tools & Workflow: ${toolsSkills.join(", ")}
-• Deployment & Cloud: ${deploySkills.join(", ")}
-• Architecture & Concepts: MVC Architecture, Full-Stack Architecture, Role-Based Access Control (RBAC), Authentication, Responsive Web Design, Unit Testing & Debugging
+${technicalSkills.map((item) => `• ${item.category}: ${item.skills}`).join("\n")}
 
 ==================================================
 EXPERIENCE & LEADERSHIP
 ==================================================
 ${experience
-  .map(
-    (job) => `${job.role.toUpperCase()}
+        .map(
+          (job) => `${job.role}
 ${job.company} | ${job.period}
-${job.points.map((pt) => `• ${pt}`).join("\n")}
+
+${job.points.map((pt) => `• ${pt}`).join("\n\n")}
 `
-  )
-  .join("\n")}
+        )
+        .join("\n")}
 ==================================================
 KEY PROJECTS
 ==================================================
-${projects
-  .map(
-    (p) => `${p.title.toUpperCase()}
-Technologies: ${p.tech.join(", ")}
-${p.demo ? `Demo: ${p.demo}\n` : ""}${p.github ? `GitHub: ${p.github}\n` : ""}• ${p.description}
+${resumeProjects
+        .map(
+          (p) => `${p.title}
+
+Technologies: ${p.technologies}
+
+${p.demo ? `Demo: ${p.demo}\n` : ""}${p.github ? `GitHub: ${p.github}\n` : ""}
+${p.points.map((pt) => `• ${pt}`).join("\n")}
 `
-  )
-  .join("\n")}
+        )
+        .join("\n")}
 ==================================================
 EDUCATION
 ==================================================
-BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY (BSIT)
+BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY
 Sultan Kudarat State University (SKSU), Philippines
-2023 — Present (Expected Graduation: 2027 | 4th Year College)
-• Capstone Project Leader and Lead Programmer
-• Core Studies: Web Development, Database Management Systems, Software Engineering, Object-Oriented Programming (OOP), Data Structures & Algorithms
+2023 – Present | Expected Graduation: 2027
+
+Relevant Coursework:
+Database Management Systems, Software Engineering, Object-Oriented Programming, Web Development, Data Structures and Algorithms.
 `.trim();
 
     try {
@@ -238,7 +293,7 @@ Sultan Kudarat State University (SKSU), Philippines
                 Professional Summary
               </h2>
               <p className="mt-2 text-xs leading-relaxed text-[var(--color-text-secondary)] print:text-xs print:text-black sm:text-[13.5px]">
-                Dedicated and detail-oriented Full-Stack Web Developer with a strong foundation in building scalable, reliable, and user-centric web applications. Proficient in React, TypeScript, Node.js, Express.js, and SQL/NoSQL databases (MySQL, TiDB, PostgreSQL, MongoDB). Proven leadership as Capstone Project Leader and Programmer, delivering production-ready platforms including school management systems (GradeSync), university scholarship portals (OSAS), appointment booking platforms (Salonease), and real-time tracking systems (P2P Bus Tracking). Experienced in RESTful API development, Role-Based Access Control (RBAC), Docker containerization, and modern deployment pipelines (Vercel, Render).
+                Full-Stack Web Developer with hands-on experience designing, developing, and deploying database-driven web applications using React, TypeScript, Node.js, Express.js, and MySQL. Experienced in building RESTful APIs, implementing authentication and role-based access control (RBAC), designing relational database structures, and developing end-to-end business workflows. Led the development of a school management capstone system and contributed to multiple software projects involving academic management, scholarship applications, appointment booking, and real-time tracking. Familiar with Docker, cloud database deployment, software testing, and application maintenance.
               </p>
             </section>
 
@@ -253,26 +308,14 @@ Sultan Kudarat State University (SKSU), Philippines
                 Technical Skills
               </h2>
               <div className="mt-2 space-y-1.5 text-xs text-[var(--color-text-secondary)] print:text-xs print:text-black sm:text-[13.5px]">
-                <p>
-                  <strong className="font-semibold text-[var(--color-text-primary)] print:text-black">Frontend Development: </strong>
-                  {frontendSkills.join(", ")}
-                </p>
-                <p>
-                  <strong className="font-semibold text-[var(--color-text-primary)] print:text-black">Backend & APIs: </strong>
-                  {backendSkills.join(", ")}
-                </p>
-                <p>
-                  <strong className="font-semibold text-[var(--color-text-primary)] print:text-black">Databases & Storage: </strong>
-                  MySQL, TiDB (Cloud Distributed SQL), PostgreSQL, MongoDB
-                </p>
-                <p>
-                  <strong className="font-semibold text-[var(--color-text-primary)] print:text-black">DevOps, Tools & Workflow: </strong>
-                  {toolsSkills.concat(deploySkills).join(", ")}
-                </p>
-                <p>
-                  <strong className="font-semibold text-[var(--color-text-primary)] print:text-black">Architecture & Concepts: </strong>
-                  Model-View-Controller (MVC) Pattern, Component-Driven Development, Role-Based Access Control (RBAC), Authentication, RESTful API Design, Real-Time WebSockets (Socket.IO), Database Normalization & Schema Design, Unit Testing, Debugging
-                </p>
+                {technicalSkills.map((item) => (
+                  <p key={item.category}>
+                    <strong className="font-semibold text-[var(--color-text-primary)] print:text-black">
+                      {item.category}:{" "}
+                    </strong>
+                    {item.skills}
+                  </p>
+                ))}
               </div>
             </section>
 
@@ -320,45 +363,60 @@ Sultan Kudarat State University (SKSU), Philippines
               >
                 Key Projects
               </h2>
-              <div className="mt-3 space-y-4 print:space-y-3">
-                {projects.map((proj) => (
+              <div className="mt-3 space-y-5 print:mt-2 print:space-y-3">
+                {resumeProjects.map((proj) => (
                   <div key={proj.title} className="break-inside-avoid print:break-inside-avoid">
-                    <div className="flex flex-col justify-between sm:flex-row sm:items-baseline">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-[var(--color-text-primary)] print:text-[13px] print:text-black">
-                          {proj.title}
-                        </h3>
+                    <h3 className="text-sm font-bold text-[var(--color-text-primary)] print:text-[13px] print:text-black">
+                      {proj.title}
+                    </h3>
+
+                    <p className="mt-1 text-xs text-[var(--color-text-secondary)] print:text-xs print:text-black sm:text-[13.5px]">
+                      <strong className="font-semibold text-[var(--color-text-primary)] print:text-black">
+                        Technologies:{" "}
+                      </strong>
+                      {proj.technologies}
+                    </p>
+
+                    {(proj.demo || proj.github) && (
+                      <div className="mt-1 space-y-0.5 text-xs text-[var(--color-text-secondary)] print:hidden sm:text-[13.5px]">
                         {proj.demo && (
-                          <a
-                            href={proj.demo}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[var(--color-accent-primary)] hover:underline print:hidden"
-                          >
-                            <span>Live Demo</span>
-                            <ArrowUpRightIcon className="h-3 w-3" />
-                          </a>
+                          <p>
+                            <strong className="font-semibold text-[var(--color-text-primary)]">
+                              Demo:{" "}
+                            </strong>
+                            <a
+                              href={proj.demo}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[var(--color-accent-primary)] hover:underline"
+                            >
+                              {proj.demo}
+                            </a>
+                          </p>
                         )}
                         {proj.github && (
-                          <a
-                            href={proj.github}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[var(--color-text-muted)] hover:underline print:hidden"
-                          >
-                            <span>Code</span>
-                            <ArrowUpRightIcon className="h-3 w-3" />
-                          </a>
+                          <p>
+                            <strong className="font-semibold text-[var(--color-text-primary)]">
+                              GitHub:{" "}
+                            </strong>
+                            <a
+                              href={proj.github}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[var(--color-accent-primary)] hover:underline"
+                            >
+                              {proj.github}
+                            </a>
+                          </p>
                         )}
                       </div>
-                      <span className="text-xs font-medium text-[var(--color-text-muted)] print:text-xs print:text-gray-700">
-                        {proj.tech.slice(0, 5).join(" • ")}
-                      </span>
-                    </div>
+                    )}
 
-                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-secondary)] print:text-xs print:text-black sm:text-[13px]">
-                      {proj.description}
-                    </p>
+                    <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-relaxed text-[var(--color-text-secondary)] print:text-xs print:text-black sm:text-[13px]">
+                      {proj.points.map((point) => (
+                        <li key={point}>{point}</li>
+                      ))}
+                    </ul>
                   </div>
                 ))}
               </div>
@@ -374,24 +432,27 @@ Sultan Kudarat State University (SKSU), Philippines
               >
                 Education
               </h2>
-              <div className="mt-2 flex flex-col justify-between sm:flex-row sm:items-baseline">
-                <div>
+              <div className="mt-2.5">
+                <div className="flex flex-col justify-between sm:flex-row sm:items-baseline">
                   <h3 className="text-sm font-bold text-[var(--color-text-primary)] print:text-[13px] print:text-black">
-                    Bachelor of Science in Information Technology (BSIT)
+                    BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY
                   </h3>
-                  <p className="text-xs font-semibold text-[var(--color-accent-secondary)] print:text-xs print:text-gray-800">
-                    Sultan Kudarat State University (SKSU), Philippines
+                  <span className="text-xs font-medium text-[var(--color-text-muted)] print:text-xs print:text-gray-700">
+                    2023 – Present | Expected Graduation: 2027
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs font-semibold text-[var(--color-accent-secondary)] print:text-xs print:text-gray-800">
+                  Sultan Kudarat State University (SKSU), Philippines
+                </p>
+                <div className="mt-2 text-xs text-[var(--color-text-secondary)] print:text-xs print:text-black sm:text-[13px]">
+                  <p className="font-semibold text-[var(--color-text-primary)] print:text-black">
+                    Relevant Coursework:
+                  </p>
+                  <p className="mt-0.5 leading-relaxed">
+                    Database Management Systems, Software Engineering, Object-Oriented Programming, Web Development, Data Structures and Algorithms.
                   </p>
                 </div>
-                <span className="text-xs font-medium text-[var(--color-text-muted)] print:text-xs print:text-gray-700">
-                  2023 — Present (Expected Graduation: 2027)
-                </span>
               </div>
-              <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-relaxed text-[var(--color-text-secondary)] print:text-xs print:text-black sm:text-[13px]">
-                <li>Currently 4th Year College student maintaining an active focus on practical full-stack software development.</li>
-                <li>Served as Capstone Project Leader and Lead Programmer; successfully presented and defended project milestones.</li>
-                <li>Relevant coursework: Web Application Development, Database Systems, Software Engineering, Object-Oriented Programming, Data Structures & Algorithms.</li>
-              </ul>
             </section>
           </div>
         </article>
