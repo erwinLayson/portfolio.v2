@@ -9,7 +9,7 @@ export const techStack = [
   },
   {
     category: "Backend",
-    items: ["Node.js", "Express", "MongoDB", "REST APIs", "PHP", "CodeIgniter", "Laravel"],
+    items: ["Node.js", "Express", "MySQL", "MongoDB", "REST APIs", "PHP", "CodeIgniter", "Laravel"],
   },
   {
     category: "Tools & Workflow",

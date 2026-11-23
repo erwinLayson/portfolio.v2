@@ -21,7 +21,8 @@ import {
   SiCodeigniter,
   SiPhp,
   SiNetlify,
-  SiTidb
+  SiTidb,
+  SiMysql
 } from "react-icons/si";
 import { TbApi } from "react-icons/tb";
 import { VscVscode } from "react-icons/vsc";
@@ -38,6 +39,7 @@ const techMeta: Record<string, { icon: IconType; color: string }> = {
   "Node.js": { icon: SiNodedotjs, color: "#5FA04E" },
   Express: { icon: SiExpress, color: "#404040" },
   PostgreSQL: { icon: SiPostgresql, color: "#4169E1" },
+  MySQL: { icon: SiMysql, color: "#4479A1" },
   MongoDB: { icon: SiMongodb, color: "#47A248" },
   "REST APIs": { icon: TbApi, color: "#52525B" },
   Git: { icon: SiGit, color: "#F05032" },
@@ -65,7 +67,7 @@ export default function TechBadge({ label }: TechBadgeProps) {
   const Icon = meta?.icon;
 
   return (
-    <div className="group flex min-w-0 items-center gap-3 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-card)] px-3.5 py-3 transition-all duration-200 hover:border-[var(--color-border-emphasis)]">
+    <div className="group flex min-w-0 items-center gap-3 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-card)] px-3.5 py-3 transition-all duration-200 hover:border-[var(--color-border-emphasis)] whitespace-nowrap select-none">
       {Icon && (
         <Icon
           className="h-[18px] w-[18px] shrink-0"
