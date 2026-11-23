@@ -70,7 +70,7 @@ function HeroSection() {
       </div>
 
       {/* Tech Stack Marquee at the bottom of Hero section */}
-      <div className="w-full pt-8 pb-2">
+      <div id="tech-stack" className="w-full pt-8 pb-2 scroll-mt-24">
         <div className="mx-auto mb-3 max-w-6xl px-6 text-center lg:text-left">
           <p className="text-xs font-semibold tracking-[0.2em] text-[var(--color-text-muted)] uppercase">
             Tech Stack
