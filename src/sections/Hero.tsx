@@ -2,7 +2,6 @@ import me from "../assets/me.png";
 import { profile } from "../constants/profile";
 import { techStack } from "../constants/techStack";
 import TechBadge from "../components/TechBadge";
-import "../style/HeroProfile.css";
 
 function HeroSection() {
   const allTechItems = Array.from(
@@ -49,22 +48,18 @@ function HeroSection() {
         </div>
 
         <div className="flex items-center justify-center">
-          <div className="animate-float relative h-52 w-52 sm:h-72 sm:w-72 lg:h-96 lg:w-96">
-            {/* Rotating gradient ring */}
-            <div className="animate-spin-slow absolute -inset-1 rounded-full bg-[var(--color-accent-gradient)] opacity-20" />
-
-            {/* Frosted glass frame */}
-            <div className="glass-frame" aria-hidden="true">
-              {/* Shine sweep */}
-              <div className="glass-shine" />
-
-              {/* Portrait image */}
-              <img
-                src={me}
-                alt="Portrait of Erwin B. Layson"
-                className="profile-img"
-              />
-            </div>
+          <div className="relative flex items-end justify-center w-60 sm:w-72 lg:w-96">
+            <img
+              src={me}
+              alt="Portrait of Erwin B. Layson"
+              className="w-full h-auto object-contain select-none"
+              style={{
+                maskImage: "linear-gradient(to bottom, black 65%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(to bottom, black 65%, transparent 100%)",
+              }}
+            />
+            {/* Soft gradient fade overlay to blend the bottom edge seamlessly into the background */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--color-bg-primary)] via-[var(--color-bg-primary)]/70 to-transparent" />
           </div>
         </div>
       </div>
