@@ -1,73 +1,109 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { PageFlip } from "page-flip";
 import { bookChapters } from "./bookData";
-import BookPageSpread from "./BookPageSpread";
 import LeftPageContent from "./LeftPageContent";
 import RightPageContent from "./RightPageContent";
-import Pagination from "../Pagination";
 import "./DigitalBook.css";
 
-type FlipState = {
-  direction: "forward" | "backward";
-  fromIdx: number;
-  toIdx: number;
-} | null;
-
 export default function DigitalBook() {
-  const [currentChapterIdx, setCurrentChapterIdx] = useState(0);
-  const [flipState, setFlipState] = useState<FlipState>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const pagesSourceRef = useRef<HTMLDivElement>(null);
+  const pageFlipRef = useRef<PageFlip | null>(null);
 
-  // Synchronous ref to strictly block simultaneous page turns
-  const isFlippingRef = useRef(false);
+  const [currentPageIdx, setCurrentPageIdx] = useState(0);
+  const [isFlipping, setIsFlipping] = useState(false);
 
-  // Touch gesture state for mobile swiping
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
-
-  const total = bookChapters.length;
+  const totalChapters = bookChapters.length;
+  const currentChapterIdx = Math.min(
+    totalChapters - 1,
+    Math.max(0, Math.floor(currentPageIdx / 2))
+  );
   const currentChapter = bookChapters[currentChapterIdx];
 
-  const triggerFlip = useCallback(
-    (targetIdx: number, direction: "forward" | "backward") => {
-      if (isFlippingRef.current) return;
-      if (targetIdx < 0 || targetIdx >= total) return;
-      if (targetIdx === currentChapterIdx) return;
+  // Initialize StPageFlip instance
+  useEffect(() => {
+    if (!containerRef.current || !pagesSourceRef.current) return;
 
-      isFlippingRef.current = true;
-      setFlipState({
-        direction,
-        fromIdx: currentChapterIdx,
-        toIdx: targetIdx,
-      });
+    // Create a dedicated inner mount element to prevent React DOM hierarchy conflicts
+    const mountEl = document.createElement("div");
+    mountEl.className = "st-book-mount";
+    containerRef.current.appendChild(mountEl);
 
-      // 800ms matches the physical 3D animation duration
-      setTimeout(() => {
-        setCurrentChapterIdx(targetIdx);
-        setFlipState(null);
-        isFlippingRef.current = false;
-      }, 790);
-    },
-    [currentChapterIdx, total]
-  );
+    // Instantiate StPageFlip with natural physics, dynamic lighting, and responsive stretching
+    const pageFlip = new PageFlip(mountEl, {
+      width: 470,
+      height: 630,
+      size: "stretch",
+      minWidth: 310,
+      maxWidth: 580,
+      minHeight: 440,
+      maxHeight: 720,
+      drawShadow: true,
+      maxShadowOpacity: 0.55,
+      showCover: false,
+      usePortrait: true,
+      autoSize: true,
+      flippingTime: 750,
+      useMouseEvents: true,
+      showPageCorners: true,
+      mobileScrollSupport: true,
+      clickEventForward: true,
+      swipeDistance: 35,
+    });
 
+    // Deep clone source template pages so React's virtual DOM is undisturbed
+    const sourcePages = Array.from(pagesSourceRef.current.children) as HTMLElement[];
+    const pageClones = sourcePages.map((page) => page.cloneNode(true) as HTMLElement);
+
+    pageFlip.loadFromHTML(pageClones);
+    pageFlipRef.current = pageFlip;
+
+    // Listen to page flip events
+    pageFlip.on("flip", (e: { data: number }) => {
+      setCurrentPageIdx(e.data);
+      setIsFlipping(false);
+    });
+
+    // Monitor flipping physics state
+    pageFlip.on("changeState", (e: { data: string }) => {
+      if (e.data === "flipping" || e.data === "user_fold") {
+        setIsFlipping(true);
+      } else if (e.data === "read") {
+        setIsFlipping(false);
+      }
+    });
+
+    return () => {
+      try {
+        pageFlip.destroy();
+      } catch (err) {
+        console.error("Error during PageFlip cleanup:", err);
+      }
+      pageFlipRef.current = null;
+      if (mountEl.parentNode) {
+        mountEl.parentNode.removeChild(mountEl);
+      }
+    };
+  }, []);
+
+  // Jump to specific chapter
+  const handleSelectChapter = useCallback((chIdx: number) => {
+    if (!pageFlipRef.current) return;
+    const targetPage = chIdx * 2;
+    pageFlipRef.current.flip(targetPage);
+  }, []);
+
+  // Flip forward
   const handleNext = useCallback(() => {
-    if (currentChapterIdx < total - 1) {
-      triggerFlip(currentChapterIdx + 1, "forward");
-    }
-  }, [currentChapterIdx, total, triggerFlip]);
+    if (!pageFlipRef.current) return;
+    pageFlipRef.current.flipNext();
+  }, []);
 
+  // Flip backward
   const handlePrev = useCallback(() => {
-    if (currentChapterIdx > 0) {
-      triggerFlip(currentChapterIdx - 1, "backward");
-    }
-  }, [currentChapterIdx, triggerFlip]);
-
-  const handleSelectChapter = useCallback(
-    (index: number) => {
-      if (index === currentChapterIdx || isFlippingRef.current) return;
-      triggerFlip(index, index > currentChapterIdx ? "forward" : "backward");
-    },
-    [currentChapterIdx, triggerFlip]
-  );
+    if (!pageFlipRef.current) return;
+    pageFlipRef.current.flipPrev();
+  }, []);
 
   // Keyboard navigation listener (ArrowLeft / ArrowRight)
   useEffect(() => {
@@ -92,40 +128,8 @@ export default function DigitalBook() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleNext, handlePrev]);
 
-  // Touch swipe support for mobile & tablet screens
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.targetTouches[0].clientX;
-    touchEndX.current = null;
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.targetTouches[0].clientX;
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStartX.current || !touchEndX.current) return;
-    const diff = touchStartX.current - touchEndX.current;
-    const minSwipeDistance = 50;
-
-    if (diff > minSwipeDistance) {
-      handleNext();
-    } else if (diff < -minSwipeDistance) {
-      handlePrev();
-    }
-
-    touchStartX.current = null;
-    touchEndX.current = null;
-  };
-
-  const isFlipping = flipState !== null;
-
   return (
-    <div
-      className="mx-auto w-full max-w-5xl"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
+    <div className="mx-auto w-full max-w-5xl">
       {/* ========================================================= */}
       {/* TOP CONTROL BAR: Chapter Navigation Tabs & Keyboard Hint */}
       {/* ========================================================= */}
@@ -158,7 +162,7 @@ export default function DigitalBook() {
       </div>
 
       {/* ========================================================= */}
-      {/* MAIN 3D REALISTIC BOOK SCENE */}
+      {/* MAIN 3D REALISTIC BOOK SCENE WITH StPageFlip */}
       {/* ========================================================= */}
       <div className="book-scene">
         <div className="book-cover">
@@ -166,130 +170,36 @@ export default function DigitalBook() {
           <div className="book-spine-left" aria-hidden="true" />
           <div className="book-spine-right" aria-hidden="true" />
 
-          {/* Book Stage with Perspective and 3D Leaf Animation */}
-          <div className="book-flip-stage">
-            {/* ----------------------------------------------------- */}
-            {/* STATE 1: Idle (Static Spread) */}
-            {/* ----------------------------------------------------- */}
-            {!flipState && (
-              <BookPageSpread
-                chapter={currentChapter}
-                totalChapters={total}
-                onNextPage={handleNext}
-                hasNext={currentChapterIdx < total - 1}
-              />
-            )}
+          {/* Central Bookmark ribbon decoration */}
+          <div className="book-ribbon" title={`Chapter ${currentChapter.chapterNumber}`} />
 
-            {/* ----------------------------------------------------- */}
-            {/* STATE 2: Flipping Forward (Right to Left: 0deg to -180deg) */}
-            {/* ----------------------------------------------------- */}
-            {flipState && flipState.direction === "forward" && (
-              <>
-                <div className="book-spread">
-                  <div className="book-gutter" aria-hidden="true" />
-                  <div className="book-ribbon" title={`Chapter ${bookChapters[flipState.toIdx].chapterNumber}`} />
-
-                  {/* Base Left Page (stays stationary on the left) */}
-                  <LeftPageContent chapter={bookChapters[flipState.fromIdx]} />
-
-                  {/* Base Right Page (Revealed Underneath as the leaf lifts away) */}
-                  <div className="relative h-full w-full overflow-hidden">
-                    <RightPageContent
-                      chapter={bookChapters[flipState.toIdx]}
-                      totalChapters={total}
-                    />
-                    {/* Dynamic cast shadow from the lifting leaf */}
-                    <div className="revealed-cast-shadow" aria-hidden="true" />
-                  </div>
-                </div>
-
-                {/* The 3D Rotating Leaf (outside book-spread so overflow never clips the 3D arc) */}
-                <div className="flipping-leaf-container flipping-leaf-forward">
-                  <div className="flipping-leaf">
-                    {/* Front Face: Current Right Page */}
-                    <div className="leaf-face leaf-front">
-                      <RightPageContent
-                        chapter={bookChapters[flipState.fromIdx]}
-                        totalChapters={total}
-                      />
-                      <div className="leaf-shadow-front" aria-hidden="true" />
-                      <div className="leaf-sheen" aria-hidden="true" />
-                    </div>
-
-                    {/* Back Face: Next Left Page */}
-                    <div className="leaf-face leaf-back">
-                      <LeftPageContent chapter={bookChapters[flipState.toIdx]} />
-                      <div className="leaf-shadow-back" aria-hidden="true" />
-                      <div className="leaf-sheen" aria-hidden="true" />
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* ----------------------------------------------------- */}
-            {/* STATE 3: Flipping Backward (Left to Right: 0deg to 180deg) */}
-            {/* ----------------------------------------------------- */}
-            {flipState && flipState.direction === "backward" && (
-              <>
-                <div className="book-spread">
-                  <div className="book-gutter" aria-hidden="true" />
-                  <div className="book-ribbon" title={`Chapter ${bookChapters[flipState.toIdx].chapterNumber}`} />
-
-                  {/* Base Left Page (Revealed Underneath on the left) */}
-                  <div className="relative h-full w-full overflow-hidden">
-                    <LeftPageContent chapter={bookChapters[flipState.toIdx]} />
-                    {/* Dynamic cast shadow from the lifting leaf */}
-                    <div className="revealed-cast-shadow-left" aria-hidden="true" />
-                  </div>
-
-                  {/* Base Right Page (stays stationary on the right) */}
-                  <RightPageContent
-                    chapter={bookChapters[flipState.fromIdx]}
-                    totalChapters={total}
-                  />
-                </div>
-
-                {/* The 3D Rotating Leaf (outside book-spread) */}
-                <div className="flipping-leaf-container flipping-leaf-backward">
-                  <div className="flipping-leaf">
-                    {/* Front Face: Current Left Page */}
-                    <div className="leaf-face leaf-front">
-                      <LeftPageContent chapter={bookChapters[flipState.fromIdx]} />
-                      <div className="leaf-shadow-front" aria-hidden="true" />
-                      <div className="leaf-sheen" aria-hidden="true" />
-                    </div>
-
-                    {/* Back Face: Previous Right Page */}
-                    <div className="leaf-face leaf-back">
-                      <RightPageContent
-                        chapter={bookChapters[flipState.toIdx]}
-                        totalChapters={total}
-                      />
-                      <div className="leaf-shadow-back" aria-hidden="true" />
-                      <div className="leaf-sheen" aria-hidden="true" />
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          {/* StPageFlip Dynamic Canvas/DOM Container */}
+          <div ref={containerRef} className="st-book-container" />
         </div>
       </div>
 
-      {/* ========================================================= */}
-      {/* BOTTOM NAVIGATION CONTROLS & PROGRESS INDICATOR */}
-      {/* ========================================================= */}
-      <Pagination
-        currentPage={currentChapterIdx + 1}
-        totalPages={total}
-        disabled={isFlipping}
-        onPageChange={(page) => handleSelectChapter(page - 1)}
-        prevLabel="Previous Page"
-        nextLabel="Next Page"
-        indicatorLabel={`Chapter ${currentChapter.chapterNumber} of ${total} • Pages ${currentChapter.chapterNumber * 2 - 1}–${currentChapter.chapterNumber * 2}`}
-        ariaLabel="Experience chapters pagination"
-      />
+      {/* Hidden source templates for StPageFlip to clone from */}
+      <div ref={pagesSourceRef} style={{ display: "none" }} aria-hidden="true">
+        {bookChapters.flatMap((chapter) => [
+          <div
+            key={`page-${chapter.id}-left`}
+            className="st-page st-page-left"
+            data-density="soft"
+          >
+            <LeftPageContent chapter={chapter} />
+          </div>,
+          <div
+            key={`page-${chapter.id}-right`}
+            className="st-page st-page-right"
+            data-density="soft"
+          >
+            <RightPageContent
+              chapter={chapter}
+              totalChapters={totalChapters}
+            />
+          </div>,
+        ])}
+      </div>
     </div>
   );
 }
