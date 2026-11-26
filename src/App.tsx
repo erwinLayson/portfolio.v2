@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
-import Navbar from "./components/Navbar";
-import HeroSection from "./sections/Hero";
-import AboutMe from "./sections/AboutMe";
-import Experience from "./sections/Experience";
-import Projects from "./sections/Projects";
-import Gallery from "./components/Gallery";
-import ContactMe from "./sections/ContactMe";
-import Footer from "./components/Footer";
 import ResumePage from "./pages/ResumePage";
+import Environment3D from "./scene/Environment3D";
+import { EnvironmentNavProvider } from "./state/EnvironmentNavProvider";
 
 function checkIsResumeRoute(): boolean {
   if (typeof window === "undefined") return false;
@@ -37,17 +31,8 @@ export default function App() {
   }
 
   return (
-    <>
-      <Navbar />
-      <main>
-        <HeroSection />
-        <AboutMe />
-        <Experience />
-        <Projects />
-        <Gallery />
-        <ContactMe />
-      </main>
-      <Footer />
-    </>
+    <EnvironmentNavProvider>
+      <Environment3D />
+    </EnvironmentNavProvider>
   );
 }

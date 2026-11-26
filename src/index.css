@@ -35,10 +35,27 @@
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+
+  --in-oklab: ;
+  --target-size: 24px;
 }
 
-html {
-  scroll-behavior: smooth;
+@supports (background: linear-gradient(in oklab, white, black)) {
+  :root {
+    --in-oklab: in oklab;
+  }
+}
+
+@media (pointer: coarse) {
+  :root {
+    --target-size: 44px;
+  }
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
 }
 
 body {
@@ -46,6 +63,7 @@ body {
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
   line-height: 1.6;
+  overflow-wrap: break-word;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -55,9 +73,9 @@ body {
   color: var(--color-primary-white);
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-brand-blue);
-  outline-offset: 2px;
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 3px;
 }
 
 @layer base {
@@ -69,36 +87,30 @@ body {
   a:hover {
     color: var(--color-accent-cyan);
   }
+
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+
+  p, li {
+    text-wrap: pretty;
+  }
 }
 
 ::placeholder {
   color: var(--color-text-muted);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
-    animation: none;
-  }
-}
-
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-marquee {
-  display: flex;
-  width: max-content;
-  will-change: transform;
-  animation: marquee 35s linear infinite;
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
 }
 
 @page {
@@ -107,7 +119,6 @@ body {
 }
 
 @media print {
-  /* Completely remove top action toolbar header, buttons, and footer */
   header.resume-toolbar,
   .resume-toolbar,
   .print-hidden,
@@ -131,6 +142,7 @@ body {
     color: #111827 !important;
     margin: 0 !important;
     padding: 0 !important;
+    height: auto !important;
     font-size: 9.5pt;
     line-height: 1.35;
     -webkit-print-color-adjust: exact !important;
@@ -156,7 +168,6 @@ body {
     border-radius: 0 !important;
   }
 
-  /* Allow main, article, and section to flow and break naturally across pages */
   main,
   article,
   section {
@@ -164,7 +175,6 @@ body {
     page-break-inside: auto !important;
   }
 
-  /* Prevent headings from being separated from following content */
   h1,
   h2,
   h3 {
@@ -172,7 +182,6 @@ body {
     page-break-after: avoid !important;
   }
 
-  /* Keep individual list items from splitting across pages */
   li {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
@@ -183,4 +192,3 @@ body {
     text-decoration: none !important;
   }
 }
-

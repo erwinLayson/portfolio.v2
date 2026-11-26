@@ -1,4 +1,4 @@
-export type BookChapter = {
+export type ChronicleChapter = {
   id: number;
   chapterNumber: number;
   chapterRoman: string;
@@ -14,7 +14,7 @@ export type BookChapter = {
   quote?: string;
 };
 
-export const bookChapters: BookChapter[] = [
+export const chronicleChapters: ChronicleChapter[] = [
   {
     id: 1,
     chapterNumber: 1,

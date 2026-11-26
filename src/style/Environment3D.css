@@ -1,0 +1,1298 @@
+/* ============================================================
+   360-DEGREE INTERACTIVE CSS 3D SPATIAL ENVIRONMENT
+   ============================================================ */
+
+.env-viewport {
+  --cam-persp: 920px;
+  --cam-yaw: 0deg;
+  --cam-pitch: -27deg;
+  --cam-zoom: -380px;
+  --cam-x: 0px;
+  --cam-y: -320px;
+  --cam-z: 0px;
+  --floor-near-z: 155px;
+  --ceil-near-z: 155px;
+
+  position: fixed;
+  inset: 0;
+  width: 100dvw;
+  height: 100dvh;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
+  background-color: var(--color-bg-primary);
+  background-image:
+    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(22, 131, 247, 0.16), transparent 72%),
+    radial-gradient(ellipse 52% 48% at 80% 72%, rgba(24, 185, 232, 0.11), transparent 74%),
+    linear-gradient(to bottom var(--in-oklab), #03060d 0%, #060d1c 48%, #040812 100%);
+}
+
+.env-viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.env-viewport.is-station-open {
+  cursor: default;
+  touch-action: auto;
+}
+
+.env-viewport.is-transitioning:not(.is-station-open) {
+  cursor: progress;
+}
+
+/* Subtle periphery dim when inspecting a station without obscuring 3D context */
+.env-focus-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: rgba(4, 8, 16, 0.42);
+  cursor: pointer;
+}
+
+/* Fixed perspective projection container (never mutated on zoom/drag) */
+.env-camera-perspective {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  perspective: var(--cam-persp);
+  perspective-origin: 50% 50%;
+}
+
+/* Zoom rig translates along Z relative to the eye plane */
+.env-camera-zoom {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  transform: translate3d(0px, 0px, calc(var(--cam-persp) + var(--cam-zoom)));
+}
+
+/* Pitch rig rotates vertically around X before yaw */
+.env-camera-pitch {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  transform: rotateX(var(--cam-pitch));
+}
+
+/* ============================================================
+   DIGITAL PERSPECTIVE FLOOR & CENTRAL HUB (GPU-ONLY TRANSFORMS)
+   ============================================================ */
+
+.env-floor-stage {
+  position: absolute;
+  left: -1700px;
+  top: -2400px;
+  width: 3400px;
+  height: 2400px;
+  overflow: hidden;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  transform:
+    translate3d(0px, calc(180px - var(--cam-y)), calc(-1 * var(--floor-near-z)))
+    rotateX(90deg);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 42%, transparent 94%);
+  mask-image: linear-gradient(to top, #000 0%, #000 42%, transparent 94%);
+}
+
+.env-floor-world {
+  position: absolute;
+  left: 50%;
+  top: 2400px;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  transform:
+    translate3d(0px, var(--floor-near-z), 0px)
+    rotateZ(calc(-1 * var(--cam-yaw)))
+    translate3d(calc(-1 * var(--cam-x)), calc(-1 * var(--cam-z)), 0px);
+}
+
+.env-floor-grid {
+  position: absolute;
+  left: -1700px;
+  top: -1700px;
+  width: 3400px;
+  height: 3400px;
+  background-image:
+    radial-gradient(circle at center, transparent 16%, rgba(5, 9, 18, 0.72) 66%, rgba(5, 9, 18, 0.98) 92%),
+    radial-gradient(circle at center, rgba(24, 185, 232, 0.36) 0 1.2px, transparent 1.8px),
+    linear-gradient(rgba(24, 185, 232, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24, 185, 232, 0.14) 1px, transparent 1px);
+  background-position: 0 0, -1px -1px, 0 0, 0 0;
+  background-size: 100% 100%, 72px 72px, 72px 72px, 72px 72px;
+}
+
+.env-floor-hub {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+
+.env-floor-hub__ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(24, 185, 232, 0.36);
+}
+
+.env-floor-hub__ring--outer {
+  width: 680px;
+  height: 680px;
+  border-style: dashed;
+  border-color: rgba(24, 185, 232, 0.24);
+}
+
+.env-floor-hub__ring--mid {
+  width: 420px;
+  height: 420px;
+  border-color: rgba(22, 131, 247, 0.44);
+  box-shadow: 0 0 32px rgba(22, 131, 247, 0.14);
+}
+
+.env-floor-hub__ring--inner {
+  width: 210px;
+  height: 210px;
+  border-color: rgba(24, 185, 232, 0.65);
+  box-shadow: inset 0 0 24px rgba(24, 185, 232, 0.18);
+}
+
+.env-floor-hub__core {
+  position: absolute;
+  left: -46px;
+  top: -46px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(24, 185, 232, 0.38), transparent 70%);
+}
+
+.env-floor-spoke {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+}
+
+.env-floor-spoke__line {
+  position: absolute;
+  left: -1px;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(
+    to top,
+    rgba(24, 185, 232, 0.1) 0%,
+    rgba(24, 185, 232, 0.36) 65%,
+    rgba(24, 185, 232, 0.68) 100%
+  );
+}
+
+.env-floor-spoke.is-bright .env-floor-spoke__line {
+  width: 2.5px;
+  background: linear-gradient(
+    to top,
+    rgba(22, 131, 247, 0.22) 0%,
+    rgba(24, 185, 232, 0.76) 100%
+  );
+  box-shadow: 0 0 12px rgba(24, 185, 232, 0.45);
+}
+
+.env-floor-spoke__pad {
+  position: absolute;
+  left: -34px;
+  width: 68px;
+  height: 68px;
+  margin-bottom: -34px;
+  border-radius: 50%;
+  border: 1px solid rgba(24, 185, 232, 0.52);
+  background: radial-gradient(circle, rgba(24, 185, 232, 0.26), transparent 72%);
+  box-shadow: 0 0 22px rgba(24, 185, 232, 0.25);
+}
+
+/* ============================================================
+   OVERHEAD HOLOGRAPHIC CANOPY (GPU-ONLY TRANSFORMS)
+   ============================================================ */
+
+.env-ceiling-stage {
+  position: absolute;
+  left: -1500px;
+  top: 0px;
+  width: 3000px;
+  height: 2200px;
+  overflow: hidden;
+  pointer-events: none;
+  transform-origin: 50% 0%;
+  transform:
+    translate3d(0px, calc(-540px - var(--cam-y)), calc(-1 * var(--ceil-near-z)))
+    rotateX(-90deg);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 32%, transparent 88%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 32%, transparent 88%);
+}
+
+.env-ceiling-world {
+  position: absolute;
+  left: 50%;
+  top: 0px;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  transform:
+    translate3d(0px, calc(-1 * var(--ceil-near-z)), 0px)
+    rotateZ(var(--cam-yaw))
+    translate3d(calc(-1 * var(--cam-x)), var(--cam-z), 0px);
+}
+
+.env-ceiling-grid {
+  position: absolute;
+  left: -1400px;
+  top: -1400px;
+  width: 2800px;
+  height: 2800px;
+  background-image:
+    radial-gradient(circle at center, transparent 15%, rgba(5, 9, 18, 0.88) 72%),
+    linear-gradient(rgba(22, 131, 247, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(22, 131, 247, 0.09) 1px, transparent 1px);
+  background-size: 100% 100%, 140px 140px, 140px 140px;
+}
+
+.env-ceiling-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(24, 185, 232, 0.22);
+}
+
+.env-ceiling-ring--inner {
+  width: 920px;
+  height: 920px;
+  border-style: dashed;
+}
+
+.env-ceiling-ring--outer {
+  width: 1640px;
+  height: 1640px;
+  border-color: rgba(22, 131, 247, 0.24);
+}
+
+/* ============================================================
+   360-DEGREE WORLD CONTAINER, HORIZON & STARFIELD
+   ============================================================ */
+
+.env-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  transform:
+    rotateY(var(--cam-yaw))
+    translate3d(
+      calc(-1 * var(--cam-x)),
+      calc(-1 * var(--cam-y)),
+      calc(-1 * var(--cam-z))
+    );
+}
+
+.env-horizon-ring,
+.env-stars-cylinder,
+.env-objects {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+}
+
+.env-horizon-panel {
+  position: absolute;
+  left: 0;
+  top: -640px;
+  height: 1280px;
+  pointer-events: none;
+  backface-visibility: hidden;
+  border-left: 1px solid rgba(24, 185, 232, 0.06);
+  background: linear-gradient(
+    to bottom,
+    transparent 8%,
+    rgba(10, 22, 42, 0.16) 44%,
+    rgba(24, 185, 232, 0.08) 58%,
+    rgba(5, 9, 18, 0.52) 76%,
+    transparent 96%
+  );
+}
+
+.env-horizon-panel__band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 56%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(24, 185, 232, 0.08),
+    rgba(24, 185, 232, 0.28),
+    rgba(24, 185, 232, 0.08)
+  );
+  box-shadow: 0 0 18px rgba(24, 185, 232, 0.2);
+}
+
+.env-horizon-panel__pillar {
+  position: absolute;
+  left: 50%;
+  top: 32%;
+  width: 68px;
+  height: 46%;
+  transform: translateX(-50%);
+  border: 1px solid rgba(24, 185, 232, 0.14);
+  border-bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(22, 131, 247, 0.08),
+    rgba(6, 12, 24, 0.6) 65%,
+    transparent
+  );
+}
+
+.env-horizon-panel__beacon {
+  position: absolute;
+  left: 50%;
+  top: 31%;
+  width: 14px;
+  height: 2px;
+  transform: translateX(-50%);
+  background: rgba(24, 185, 232, 0.72);
+  box-shadow: 0 0 12px rgba(24, 185, 232, 0.7);
+}
+
+.env-star-node {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  background: rgba(165, 232, 248, 0.85);
+  box-shadow: 0 0 8px rgba(24, 185, 232, 0.6);
+  opacity: 0.65;
+}
+
+/* ============================================================
+   INTERACTIVE PORTFOLIO OBJECT STATIONS (PRESERVE-3D SAFE)
+   ============================================================ */
+
+.env-object {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transform-style: preserve-3d;
+}
+
+.env-viewport.is-station-open .env-objects,
+.env-viewport.is-transitioning .env-objects {
+  pointer-events: none;
+}
+
+.env-object:focus-visible {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 12px;
+  border-radius: 12px;
+}
+
+.env-object__pedestal {
+  position: absolute;
+  left: 50%;
+  bottom: -24px;
+  width: 148px;
+  height: 148px;
+  margin-left: -74px;
+  margin-bottom: -74px;
+  border-radius: 50%;
+  border: 1px solid rgba(24, 185, 232, 0.42);
+  background: radial-gradient(circle, rgba(24, 185, 232, 0.22), transparent 70%);
+  transform: rotateX(90deg);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.env-object__beacon-beam {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 112px;
+  height: 220px;
+  transform: translateX(-50%);
+  background: linear-gradient(to top, rgba(24, 185, 232, 0.14), transparent 82%);
+  clip-path: polygon(32% 0%, 68% 0%, 100% 100%, 0% 100%);
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.env-object__model {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  translate: 0px 0px 0px;
+  scale: 1;
+  transition: translate 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.env-object:hover .env-object__model,
+.env-object:focus-visible .env-object__model {
+  translate: 0px -14px 34px;
+  scale: 1.06;
+}
+
+.env-object:active .env-object__model {
+  scale: 1.01;
+}
+
+/* Illuminate leaf faces directly so preserve-3d never flattens */
+.env-object:hover .box3d__face,
+.env-object:focus-visible .box3d__face,
+.env-object.is-selected .box3d__face {
+  border-color: rgba(24, 185, 232, 0.82);
+  box-shadow: inset 0 0 18px rgba(24, 185, 232, 0.3), 0 0 12px rgba(24, 185, 232, 0.25);
+}
+
+.env-object:hover .env-object__pedestal,
+.env-object:focus-visible .env-object__pedestal,
+.env-object.is-selected .env-object__pedestal {
+  border-color: rgba(24, 185, 232, 0.92);
+  box-shadow: 0 0 32px rgba(24, 185, 232, 0.5);
+}
+
+.env-object:hover .env-object__beacon-beam,
+.env-object:focus-visible .env-object__beacon-beam,
+.env-object.is-selected .env-object__beacon-beam {
+  opacity: 1;
+}
+
+.env-object__tag {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 16px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 146px;
+  padding: 7px 12px;
+  border: 1px solid rgba(24, 185, 232, 0.28);
+  border-radius: 8px;
+  background: rgba(6, 12, 24, 0.84);
+  transform: translate3d(-50%, 0px, 44px);
+  white-space: nowrap;
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.env-object:hover .env-object__tag,
+.env-object:focus-visible .env-object__tag,
+.env-object.is-selected .env-object__tag {
+  border-color: rgba(24, 185, 232, 0.85);
+  background: rgba(8, 18, 34, 0.95);
+  box-shadow: 0 0 20px rgba(24, 185, 232, 0.25);
+}
+
+.env-object__code {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--color-accent-cyan);
+  opacity: 0.8;
+}
+
+.env-object__name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--color-text-primary);
+}
+
+.env-object__cue {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent-cyan);
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 0.25s ease, max-height 0.25s ease;
+}
+
+.env-object:hover .env-object__cue,
+.env-object:focus-visible .env-object__cue {
+  opacity: 1;
+  max-height: 18px;
+}
+
+/* ============================================================
+   CSS 3D PRIMITIVES & 8 UNIQUE ARCHITECTURAL SCULPTURES
+   ============================================================ */
+
+.box3d {
+  position: absolute;
+  width: var(--bw);
+  height: var(--bh);
+  transform-style: preserve-3d;
+}
+
+.box3d__face {
+  position: absolute;
+  border: 1px solid rgba(24, 185, 232, 0.28);
+  background: rgba(8, 15, 28, 0.94);
+  box-shadow: inset 0 0 14px rgba(22, 131, 247, 0.1);
+  backface-visibility: hidden;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.box3d__face--front,
+.box3d__face--back {
+  width: var(--bw);
+  height: var(--bh);
+}
+
+.box3d__face--front {
+  transform: translateZ(calc(var(--bd) / 2));
+}
+
+.box3d__face--back {
+  transform: rotateY(180deg) translateZ(calc(var(--bd) / 2));
+}
+
+.box3d__face--left,
+.box3d__face--right {
+  width: var(--bd);
+  height: var(--bh);
+  left: calc((var(--bw) - var(--bd)) / 2);
+}
+
+.box3d__face--left {
+  transform: rotateY(-90deg) translateZ(calc(var(--bw) / 2));
+}
+
+.box3d__face--right {
+  transform: rotateY(90deg) translateZ(calc(var(--bw) / 2));
+}
+
+.box3d__face--top,
+.box3d__face--bottom {
+  width: var(--bw);
+  height: var(--bd);
+  top: calc((var(--bh) - var(--bd)) / 2);
+}
+
+.box3d__face--top {
+  transform: rotateX(90deg) translateZ(calc(var(--bh) / 2));
+  background: rgba(14, 24, 42, 0.96);
+}
+
+.box3d__face--bottom {
+  transform: rotateX(-90deg) translateZ(calc(var(--bh) / 2));
+}
+
+.box3d--cyan .box3d__face {
+  border-color: rgba(24, 185, 232, 0.68);
+  background: rgba(12, 34, 52, 0.92);
+  box-shadow: inset 0 0 16px rgba(24, 185, 232, 0.28), 0 0 14px rgba(24, 185, 232, 0.22);
+}
+
+.box3d--cyan .box3d__face--front::after {
+  content: "";
+  position: absolute;
+  inset: 18% 22%;
+  background: rgba(24, 185, 232, 0.52);
+  box-shadow: 0 0 16px rgba(24, 185, 232, 0.72);
+}
+
+.box3d--blue .box3d__face {
+  border-color: rgba(22, 131, 247, 0.62);
+  background: rgba(12, 24, 48, 0.94);
+  box-shadow: inset 0 0 16px rgba(22, 131, 247, 0.25);
+}
+
+.box3d--dim .box3d__face {
+  border-color: rgba(24, 185, 232, 0.15);
+  background: rgba(8, 14, 25, 0.85);
+}
+
+.sculpture {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.sculpture-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 1px solid rgba(24, 185, 232, 0.65);
+  box-shadow: 0 0 18px rgba(24, 185, 232, 0.35);
+}
+
+.sculpture-ring--identity {
+  width: 112px;
+  height: 112px;
+  margin-left: -56px;
+  margin-top: -64px;
+  transform: rotateX(72deg) translateZ(-12px);
+}
+
+.sculpture-ring--halo {
+  width: 92px;
+  height: 92px;
+  margin-left: -46px;
+  margin-top: -46px;
+  transform: rotateX(68deg) rotateY(16deg) translateZ(12px);
+}
+
+.sculpture-scanline {
+  position: absolute;
+  left: 52px;
+  top: 24px;
+  width: 66px;
+  height: 3px;
+  background: rgba(165, 243, 252, 0.9);
+  box-shadow: 0 0 14px rgba(24, 185, 232, 0.9);
+  transform: translateZ(16px);
+}
+
+.sculpture-holo-grid {
+  position: absolute;
+  left: 16px;
+  top: 12px;
+  width: 142px;
+  height: 112px;
+  border: 1px dashed rgba(24, 185, 232, 0.34);
+  background: linear-gradient(180deg, rgba(24, 185, 232, 0.08), transparent);
+  transform: translateZ(-26px);
+}
+
+.sculpture-orb {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(24, 185, 232, 0.72);
+  background: radial-gradient(circle at 38% 32%, #a5f3fc, rgba(24, 185, 232, 0.7) 40%, rgba(10, 22, 42, 0.95) 82%);
+  box-shadow: 0 0 24px rgba(24, 185, 232, 0.65);
+}
+
+.sculpture-orb--timeline {
+  left: 102px;
+  top: -2px;
+  width: 20px;
+  height: 20px;
+  transform: translateZ(18px);
+}
+
+.sculpture-orb--beacon {
+  left: 59px;
+  top: 16px;
+  width: 30px;
+  height: 30px;
+  transform: translateZ(20px);
+}
+
+.sculpture-sheets {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.sculpture-sheets span {
+  position: absolute;
+  left: 44px;
+  top: 78px;
+  width: 60px;
+  height: 40px;
+  border: 1px solid rgba(24, 185, 232, 0.55);
+  background: rgba(24, 185, 232, 0.14);
+  transform: translateZ(34px) rotateZ(-5deg);
+}
+
+.sculpture-sheets span:nth-child(2) {
+  transform: translateZ(48px) rotateZ(2deg);
+}
+
+.sculpture-sheets span:nth-child(3) {
+  transform: translateZ(62px) rotateZ(7deg);
+}
+
+.sculpture-dish {
+  position: absolute;
+  left: 34px;
+  top: 14px;
+  width: 88px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid rgba(24, 185, 232, 0.72);
+  background: radial-gradient(ellipse at 50% 26%, rgba(24, 185, 232, 0.85), rgba(22, 131, 247, 0.24) 55%, rgba(5, 9, 18, 0.92) 82%);
+  box-shadow: 0 0 28px rgba(24, 185, 232, 0.45), inset 0 0 16px rgba(24, 185, 232, 0.4);
+  transform: translateZ(24px) rotateX(-20deg);
+}
+
+.sculpture-signal {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(24, 185, 232, 0.5);
+  transform: translate(-50%, 0) rotateX(68deg);
+}
+
+.sculpture-signal--inner {
+  width: 56px;
+  height: 56px;
+}
+
+.sculpture-signal--outer {
+  width: 90px;
+  height: 90px;
+  top: 8px;
+  opacity: 0.45;
+}
+
+.sculpture-portal-core {
+  position: absolute;
+  left: 34px;
+  top: 26px;
+  width: 86px;
+  height: 112px;
+  border: 1px solid rgba(24, 185, 232, 0.4);
+  background: radial-gradient(ellipse at center, rgba(24, 185, 232, 0.45), rgba(22, 131, 247, 0.14) 55%, transparent 78%);
+  box-shadow: 0 0 34px rgba(24, 185, 232, 0.35), inset 0 0 24px rgba(24, 185, 232, 0.3);
+  transform: translateZ(0px);
+}
+
+/* ============================================================
+   IN-WORLD HOLOGRAPHIC STATION PROJECTION (EYE-SAFE REVEAL)
+   ============================================================ */
+
+.env-station-anchor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.env-station-anchor[data-ready="true"] {
+  visibility: visible;
+}
+
+.env-station-anchor.is-closing {
+  visibility: visible;
+}
+
+.env-station-emitter {
+  position: absolute;
+  left: 0;
+  top: 190px;
+  width: 440px;
+  height: 220px;
+  transform: translate(-50%, -50%) translateZ(-40px) rotateX(78deg);
+  border-radius: 50%;
+  border: 1px solid rgba(24, 185, 232, 0.35);
+  background: radial-gradient(ellipse at center, rgba(24, 185, 232, 0.25), transparent 72%);
+  pointer-events: none;
+}
+
+.env-station-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(880px, 92dvw);
+  max-height: min(78dvh, 740px);
+  overflow: hidden;
+  pointer-events: auto;
+  border: 1px solid rgba(24, 185, 232, 0.56);
+  background: linear-gradient(
+    155deg var(--in-oklab),
+    rgba(10, 21, 38, 0.94),
+    rgba(5, 9, 18, 0.97)
+  );
+  box-shadow:
+    0 0 0 1px rgba(5, 9, 18, 0.92),
+    0 34px 90px rgba(0, 0, 0, 0.78),
+    0 0 70px rgba(22, 131, 247, 0.22);
+  clip-path: polygon(
+    0 18px, 18px 0, calc(100% - 18px) 0, 100% 18px,
+    100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px)
+  );
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  scale: 0.94;
+  transition: opacity 0.22s ease, scale 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.env-station-anchor[data-ready="true"] .env-station-panel {
+  opacity: 1;
+  scale: 1;
+}
+
+.env-station-anchor.is-closing .env-station-panel {
+  opacity: 0;
+  scale: 0.94;
+  pointer-events: none;
+  transition: opacity 0.18s ease, scale 0.18s ease;
+}
+
+.env-station-rail {
+  position: absolute;
+  top: 12%;
+  bottom: 12%;
+  width: 3px;
+  background: linear-gradient(to bottom, transparent, rgba(24, 185, 232, 0.8), transparent);
+  box-shadow: 0 0 14px rgba(24, 185, 232, 0.65);
+  pointer-events: none;
+}
+
+.env-station-rail--left {
+  left: 0;
+}
+
+.env-station-rail--right {
+  right: 0;
+}
+
+.env-station-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.65rem 0.95rem;
+  border-bottom: 1px solid rgba(24, 185, 232, 0.22);
+  background: linear-gradient(90deg, rgba(24, 185, 232, 0.12), transparent 65%);
+}
+
+.env-station-code {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--color-accent-cyan);
+  text-transform: uppercase;
+}
+
+.env-station-header h2 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.3rem, 2.8vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+.env-station-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: max(2.5rem, var(--target-size));
+  min-height: max(2.5rem, var(--target-size));
+  flex: 0 0 auto;
+  border: 1px solid rgba(24, 185, 232, 0.42);
+  border-radius: 8px;
+  background: rgba(13, 19, 30, 0.9);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  scale: 1;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease, scale 0.15s ease;
+}
+
+.env-station-close:hover {
+  border-color: rgba(24, 185, 232, 0.9);
+  background: rgba(24, 185, 232, 0.16);
+  color: var(--color-accent-cyan);
+}
+
+.env-station-close:active {
+  scale: 0.95;
+}
+
+.env-station-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: 1.35rem 1.65rem 1.65rem;
+  scrollbar-color: rgba(24, 185, 232, 0.45) transparent;
+  scrollbar-width: thin;
+}
+
+.env-station-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.65rem;
+  border-top: 1px solid rgba(24, 185, 232, 0.2);
+  background: rgba(5, 9, 18, 0.65);
+}
+
+.env-station-return {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: var(--target-size);
+  border: 0;
+  background: transparent;
+  padding: 0.25rem 0;
+  color: var(--color-accent-cyan);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.env-station-return:hover {
+  opacity: 0.78;
+}
+
+.env-station-esc {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+/* ============================================================
+   MINIMAL ENVIRONMENT HUD (INTRO HINT + COMPASS/RESET)
+   ============================================================ */
+
+.env-hud {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.env-viewport.is-station-open .env-hud {
+  opacity: 0;
+}
+
+.env-intro-hint {
+  position: fixed;
+  left: 50%;
+  bottom: max(4.75rem, calc(4.25rem + env(safe-area-inset-bottom, 0px)));
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 90dvw;
+  padding: 0.55rem 1.05rem;
+  border: 1px solid rgba(24, 185, 232, 0.34);
+  border-radius: 999px;
+  background: rgba(6, 12, 24, 0.78);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.env-intro-hint__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--color-accent-cyan);
+  box-shadow: 0 0 10px rgba(24, 185, 232, 0.9);
+}
+
+.env-controls {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.55rem;
+  pointer-events: auto;
+}
+
+.env-control-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.45rem 0.35rem 0.75rem;
+  border: 1px solid rgba(24, 185, 232, 0.32);
+  border-radius: 999px;
+  background: rgba(6, 12, 24, 0.85);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+.env-compass-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding-right: 0.4rem;
+  border-right: 1px solid rgba(24, 185, 232, 0.2);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.env-compass-deg {
+  font-weight: 700;
+  color: var(--color-accent-cyan);
+}
+
+.env-compass-sector {
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  color: var(--color-text-muted);
+}
+
+.env-control-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: max(2rem, var(--target-size));
+  min-width: var(--target-size);
+  padding: 0.3rem 0.75rem;
+  border: 1px solid rgba(24, 185, 232, 0.25);
+  border-radius: 999px;
+  background: rgba(13, 21, 36, 0.9);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  scale: 1;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease, scale 0.15s ease;
+}
+
+.env-control-btn:hover {
+  border-color: rgba(24, 185, 232, 0.8);
+  background: rgba(24, 185, 232, 0.14);
+  color: var(--color-accent-cyan);
+}
+
+.env-control-btn:active {
+  scale: 0.96;
+}
+
+.env-radar-menu {
+  width: min(280px, 86dvw);
+  border: 1px solid rgba(24, 185, 232, 0.42);
+  border-radius: 12px;
+  background: rgba(6, 12, 24, 0.95);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.72), 0 0 32px rgba(22, 131, 247, 0.18);
+  overflow: hidden;
+}
+
+.env-radar-menu__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid rgba(24, 185, 232, 0.2);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--color-accent-cyan);
+}
+
+.env-radar-menu__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding: 0.55rem;
+  list-style: none;
+  margin: 0;
+}
+
+.env-radar-menu__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  min-height: var(--target-size);
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(24, 185, 232, 0.16);
+  border-radius: 8px;
+  background: rgba(13, 21, 36, 0.78);
+  color: var(--color-text-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.env-radar-menu__item:hover:not(:disabled),
+.env-radar-menu__item:focus-visible:not(:disabled) {
+  border-color: rgba(24, 185, 232, 0.78);
+  background: rgba(24, 185, 232, 0.14);
+  color: var(--color-text-primary);
+}
+
+.env-radar-menu__item:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.env-radar-menu__az {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--color-accent-cyan);
+}
+
+.env-radar-menu__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   OPT-IN MOTION & KEYFRAMES (PREFERS-REDUCED-MOTION SAFE)
+   ============================================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .env-star-node {
+    animation: env-star-twinkle 4.8s ease-in-out infinite alternate;
+  }
+
+  .sculpture-ring--identity,
+  .sculpture-ring--halo {
+    animation: env-ring-float 5.4s ease-in-out infinite alternate;
+  }
+
+  .sculpture-orb {
+    animation: env-orb-bob 4.2s ease-in-out infinite alternate;
+  }
+
+  .sculpture-signal--outer {
+    animation: env-signal-pulse 3.2s ease-out infinite;
+  }
+
+  .sculpture-scanline {
+    animation: env-scan-sweep 3.8s ease-in-out infinite alternate;
+  }
+
+  .env-intro-hint__dot {
+    animation: env-hint-pulse 2.2s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .env-station-panel {
+    transition: opacity 0.12s ease;
+  }
+}
+
+@keyframes env-star-twinkle {
+  from { opacity: 0.25; scale: 0.85; }
+  to { opacity: 0.95; scale: 1.25; }
+}
+
+@keyframes env-ring-float {
+  from { translate: 0 0 0; }
+  to { translate: 0 -8px 0; }
+}
+
+@keyframes env-orb-bob {
+  from { translate: 0 0 0; }
+  to { translate: 0 -10px 0; }
+}
+
+@keyframes env-signal-pulse {
+  0% { opacity: 0.75; scale: 0.75; }
+  100% { opacity: 0; scale: 1.55; }
+}
+
+@keyframes env-scan-sweep {
+  from { translate: 0 0 0; }
+  to { translate: 0 64px 0; }
+}
+
+@keyframes env-hint-pulse {
+  0%, 100% { opacity: 0.45; scale: 0.85; }
+  50% { opacity: 1; scale: 1.35; }
+}
+
+/* ============================================================
+   MOBILE & SMALL VIEWPORT ADAPTATIONS
+   ============================================================ */
+
+@media (max-width: 767px) {
+  .env-intro-hint {
+    bottom: max(5.2rem, calc(4.8rem + env(safe-area-inset-bottom, 0px)));
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+    padding: 0.5rem 0.85rem;
+    white-space: normal;
+  }
+
+  .env-controls {
+    left: max(0.75rem, env(safe-area-inset-left, 0px));
+    right: max(0.75rem, env(safe-area-inset-right, 0px));
+    align-items: center;
+  }
+
+  .env-control-pill {
+    width: 100%;
+    max-width: 420px;
+    justify-content: space-between;
+  }
+
+  .env-compass-sector {
+    display: none;
+  }
+
+  .env-object__tag {
+    min-width: 120px;
+    padding: 5px 10px;
+  }
+
+  .env-object__name {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+  }
+
+  .env-station-panel {
+    width: 94dvw;
+    max-height: 84dvh;
+  }
+
+  .env-station-header,
+  .env-station-body,
+  .env-station-footer {
+    padding-inline: 1.05rem;
+  }
+
+  .env-station-emitter {
+    display: none;
+  }
+}
