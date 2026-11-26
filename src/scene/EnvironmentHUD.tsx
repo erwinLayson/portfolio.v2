@@ -28,7 +28,7 @@ function CompassReadout({ showBadge }: { showBadge: boolean }) {
           000°
         </span>
         <span ref={posRef} className="env-compass-sector">
-          X0 · Y-380 · Z420
+          X0 · Y-1520 · Z1960
         </span>
       </span>
     );

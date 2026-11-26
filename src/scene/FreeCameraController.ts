@@ -18,6 +18,7 @@ import {
 import {
   CAMERA_BOUNDS,
   CEILING_ELEVATION_Y,
+  CENTRAL_PRESENTATION,
   DEFAULT_CAMERA,
   FLOOR_ELEVATION_Y,
   HORIZON_PANELS,
@@ -65,6 +66,8 @@ type FreeCameraState = {
 
 type FreeCameraControllerArgs = {
   viewportRef: RefObject<HTMLDivElement | null>;
+  ceilingStageRef: RefObject<HTMLDivElement | null>;
+  presenterRef: RefObject<HTMLDivElement | null>;
   stationAnchorRef: RefObject<HTMLDivElement | null>;
   objectElsRef: RefObject<Partial<Record<SectionId, HTMLButtonElement | null>>>;
   horizonElsRef: RefObject<(HTMLDivElement | null)[]>;
@@ -75,6 +78,8 @@ type FreeCameraControllerArgs = {
 
 export function useFreeCameraController({
   viewportRef,
+  ceilingStageRef,
+  presenterRef,
   stationAnchorRef,
   objectElsRef,
   horizonElsRef,
@@ -350,7 +355,7 @@ export function useFreeCameraController({
       markInteracted();
 
       const cam = cameraRef.current;
-      const step = -event.deltaY * 1.1;
+      const step = -event.deltaY * 1.45;
       const dir = getViewDirection(
         cam.orientation.targetYaw,
         cam.orientation.targetPitch,
@@ -539,6 +544,43 @@ export function useFreeCameraController({
         viewport.style.setProperty("--cam-z", `${cz.toFixed(2)}px`);
         viewport.style.setProperty("--floor-near-z", `${floorNearZ}px`);
         viewport.style.setProperty("--ceil-near-z", `${ceilNearZ}px`);
+
+        // Orient central AI presenter around its vertical Y axis toward camera XZ position
+        if (Math.hypot(cx, cz) > 20) {
+          const faceYawDeg = (Math.atan2(cx, cz) * 180) / Math.PI;
+          viewport.style.setProperty("--presenter-yaw", `${faceYawDeg.toFixed(2)}deg`);
+        }
+      }
+
+      // Cull central AI presentation when behind eye plane or when inspecting a station
+      const presenterEl = presenterRef.current;
+      if (presenterEl) {
+        const presenterZEye = worldToEyeZ(
+          0,
+          CENTRAL_PRESENTATION.y,
+          0,
+          cx,
+          cy,
+          cz,
+          yaw,
+          pitch,
+        );
+        const hidePresenter =
+          Boolean(activeSectionRef.current) || presenterZEye > -240;
+        if (presenterEl.dataset.hidden !== String(hidePresenter)) {
+          presenterEl.dataset.hidden = String(hidePresenter);
+          presenterEl.style.visibility = hidePresenter ? "hidden" : "visible";
+        }
+      }
+
+      // Hide ceiling canopy when viewing from above so top-down view is unobstructed
+      const ceilingEl = ceilingStageRef.current;
+      if (ceilingEl) {
+        const showCeiling = cy > CEILING_ELEVATION_Y + 40;
+        if (ceilingEl.dataset.visible !== String(showCeiling)) {
+          ceilingEl.dataset.visible = String(showCeiling);
+          ceilingEl.style.visibility = showCeiling ? "visible" : "hidden";
+        }
       }
 
       // 5. Eye-plane frustum culling strictly offscreen behind the camera
@@ -654,10 +696,12 @@ export function useFreeCameraController({
     rafId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafId);
   }, [
+    ceilingStageRef,
     horizonElsRef,
     objectElsRef,
     particleCoords,
     particleElsRef,
+    presenterRef,
     publishTelemetry,
     setIsTransitioning,
     stationAnchorRef,

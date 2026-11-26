@@ -8,6 +8,7 @@ import {
   worldStations,
 } from "./worldConfig";
 import { useFreeCameraController } from "./FreeCameraController";
+import CentralPresentation from "./CentralPresentation";
 import WorldObject from "./WorldObject";
 import StationProjection from "./StationProjection";
 import EnvironmentHUD from "./EnvironmentHUD";
@@ -18,8 +19,8 @@ const horizonIndices = Array.from({ length: HORIZON_PANELS }, (_, i) => i);
 
 const cylinderParticles = Array.from({ length: 48 }, (_, i) => {
   const azimuthDeg = (i * 137.508) % 360;
-  const radius = 1680 + ((i * 89) % 320);
-  const y = -500 + ((i * 53) % 420);
+  const radius = 1460 + ((i * 89) % 300);
+  const y = -520 + ((i * 53) % 440);
   const size = i % 4 === 0 ? 3 : 2;
   const delay = -((i % 7) * 0.9);
   return { id: i, azimuthDeg, radius, y, size, delay };
@@ -29,6 +30,8 @@ export default function Environment3D() {
   const { activeSection, isTransitioning, closeSection } = useEnvironmentNav();
 
   const viewportRef = useRef<HTMLDivElement>(null);
+  const ceilingStageRef = useRef<HTMLDivElement>(null);
+  const presenterRef = useRef<HTMLDivElement>(null);
   const stationAnchorRef = useRef<HTMLDivElement>(null);
   const objectElsRef = useRef<Partial<Record<SectionId, HTMLButtonElement | null>>>(
     {},
@@ -62,6 +65,8 @@ export default function Environment3D() {
     endPointer,
   } = useFreeCameraController({
     viewportRef,
+    ceilingStageRef,
+    presenterRef,
     stationAnchorRef,
     objectElsRef,
     horizonElsRef,
@@ -94,10 +99,6 @@ export default function Environment3D() {
       onPointerUp={endPointer}
       onPointerCancel={endPointer}
     >
-      <h1 className="visually-hidden">
-        Erwin B. Layson — Free-Roaming 3D Developer Portfolio
-      </h1>
-
       {/* Click outside station panel backdrop to restore previous exploration pose */}
       {activeSection && (
         <div
@@ -147,7 +148,7 @@ export default function Environment3D() {
           </div>
 
           {/* Overhead Holographic Canopy */}
-          <div className="env-ceiling-stage" aria-hidden="true">
+          <div className="env-ceiling-stage" ref={ceilingStageRef} aria-hidden="true">
             <div className="env-ceiling-world">
               <div className="env-ceiling-grid" />
               <div className="env-ceiling-ring env-ceiling-ring--inner" />
@@ -207,6 +208,9 @@ export default function Environment3D() {
                 />
               ))}
             </div>
+
+            {/* Central Cinematic AI Presentation in 3D World Coordinates */}
+            <CentralPresentation presenterRef={presenterRef} />
 
             {/* 8 Interactive Portfolio Stations Distributed Around the Arena */}
             <div

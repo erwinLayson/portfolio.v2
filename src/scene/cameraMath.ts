@@ -1,4 +1,8 @@
-import { CAMERA_BOUNDS, worldStations } from "./worldConfig";
+import {
+  CAMERA_BOUNDS,
+  CENTRAL_PRESENTATION,
+  worldStations,
+} from "./worldConfig";
 
 const DEG_TO_RAD = Math.PI / 180;
 
@@ -132,6 +136,20 @@ export function resolveFreeCameraCollision(
   let y = clamp(candidate.y, CAMERA_BOUNDS.minY, CAMERA_BOUNDS.maxY);
   let z = candidate.z;
 
+  // Prevent flying directly through the central floating AI presentation column
+  if (y > CENTRAL_PRESENTATION.minY && y < CENTRAL_PRESENTATION.maxY) {
+    const centerDist = Math.hypot(x, z);
+    if (centerDist < CENTRAL_PRESENTATION.collisionRadiusPx) {
+      if (centerDist > 0.001) {
+        const pushScale = CENTRAL_PRESENTATION.collisionRadiusPx / centerDist;
+        x *= pushScale;
+        z *= pushScale;
+      } else {
+        z = CENTRAL_PRESENTATION.collisionRadiusPx;
+      }
+    }
+  }
+
   // Resolve solid station cylindrical bounds (smooth push-out along radial normal)
   for (const station of worldStations) {
     const scaledR = Math.round(station.radiusPx * radiusScale);
@@ -175,9 +193,9 @@ export function resolveFreeCameraCollision(
 }
 
 export function computeResponsivePerspective(viewportWidth: number): number {
-  if (viewportWidth < 640) return 600;
-  if (viewportWidth < 1024) return 680;
-  return 760;
+  if (viewportWidth < 560) return 440;
+  if (viewportWidth < 960) return 640;
+  return 780;
 }
 
 export function computeRadiusScale(viewportWidth: number): number {
