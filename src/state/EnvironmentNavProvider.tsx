@@ -9,7 +9,7 @@ import {
 } from "./environmentNav";
 import { DEFAULT_CAMERA } from "../scene/worldConfig";
 
-const CLOSE_DELAY_MS = 220;
+const CLOSE_DELAY_MS = 180;
 
 export function EnvironmentNavProvider({ children }: { children: ReactNode }) {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
@@ -59,7 +59,7 @@ export function EnvironmentNavProvider({ children }: { children: ReactNode }) {
 
   const openSection = useCallback(
     (section: SectionId) => {
-      if (isTransitioning && !isClosing) return;
+      if (activeSection === section && !isClosing) return;
       if (closeTimer.current) {
         clearTimeout(closeTimer.current);
         closeTimer.current = null;
@@ -74,11 +74,11 @@ export function EnvironmentNavProvider({ children }: { children: ReactNode }) {
       setIsClosing(false);
       setActiveSection(section);
     },
-    [activeSection, isClosing, isTransitioning],
+    [activeSection, isClosing],
   );
 
   const closeSection = useCallback(() => {
-    if (!activeSection || closeTimer.current) return;
+    if (!activeSection || isClosing || closeTimer.current) return;
     const closingTarget = activeSection;
     const prefersReducedMotion =
       typeof window !== "undefined" &&
@@ -103,7 +103,7 @@ export function EnvironmentNavProvider({ children }: { children: ReactNode }) {
     } else {
       closeTimer.current = setTimeout(finalize, delay);
     }
-  }, [activeSection]);
+  }, [activeSection, isClosing]);
 
   const resetCamera = useCallback(() => {
     if (closeTimer.current) {

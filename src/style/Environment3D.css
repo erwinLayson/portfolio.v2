@@ -37,16 +37,12 @@
   touch-action: auto;
 }
 
-.env-viewport.is-transitioning:not(.is-station-open) {
-  cursor: progress;
-}
-
-/* Subtle periphery dim when inspecting a station without obscuring 3D context */
+/* Transparent hit-target outside station panel so closing never dims or flashes the 3D scene */
 .env-focus-backdrop {
   position: fixed;
   inset: 0;
   z-index: 1;
-  background: rgba(4, 8, 16, 0.42);
+  background: transparent;
   cursor: pointer;
 }
 
@@ -578,11 +574,6 @@
   transform-style: preserve-3d;
 }
 
-.env-viewport.is-station-open .env-objects,
-.env-viewport.is-transitioning .env-objects {
-  pointer-events: none;
-}
-
 .env-object:focus-visible {
   outline: 2px solid var(--color-accent-cyan);
   outline-offset: 12px;
@@ -973,7 +964,7 @@
   visibility: hidden;
 }
 
-.env-station-anchor[data-ready="true"],
+.env-station-anchor.is-ready,
 .env-station-anchor.is-closing {
   visibility: visible;
 }
@@ -989,6 +980,17 @@
   border: 1px solid rgba(24, 185, 232, 0.35);
   background: radial-gradient(ellipse at center, rgba(24, 185, 232, 0.25), transparent 72%);
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.env-station-anchor.is-ready .env-station-emitter {
+  opacity: 1;
+}
+
+.env-station-anchor.is-closing .env-station-emitter {
+  opacity: 0;
+  transition: opacity 0.16s ease;
 }
 
 .env-station-panel {
@@ -1015,20 +1017,20 @@
   );
   transform: translate(-50%, -50%);
   opacity: 0;
-  scale: 0.94;
+  scale: 0.95;
   transition: opacity 0.22s ease, scale 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.env-station-anchor[data-ready="true"] .env-station-panel {
+.env-station-anchor.is-ready .env-station-panel {
   opacity: 1;
   scale: 1;
 }
 
 .env-station-anchor.is-closing .env-station-panel {
   opacity: 0;
-  scale: 0.94;
+  scale: 0.95;
   pointer-events: none;
-  transition: opacity 0.18s ease, scale 0.18s ease;
+  transition: opacity 0.16s ease, scale 0.16s ease;
 }
 
 .env-station-rail {
@@ -1157,11 +1159,6 @@
   inset: 0;
   z-index: 20;
   pointer-events: none;
-  transition: opacity 0.25s ease;
-}
-
-.env-viewport.is-station-open .env-hud {
-  opacity: 0;
 }
 
 .env-intro-hint {

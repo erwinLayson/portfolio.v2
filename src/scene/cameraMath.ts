@@ -121,7 +121,7 @@ export function computeSafePlaneNearZ(
   const rad = pitchDeg * DEG_TO_RAD;
   const cosPitch = Math.max(0.25, Math.cos(rad));
   const numerator = planeOffsetFromCamY * Math.sin(rad) + minClearancePx;
-  return Math.max(120, Math.ceil(numerator / cosPitch));
+  return Math.max(120, numerator / cosPitch);
 }
 
 /**

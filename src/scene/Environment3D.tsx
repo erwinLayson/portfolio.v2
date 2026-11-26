@@ -213,10 +213,7 @@ export default function Environment3D() {
             <CentralPresentation presenterRef={presenterRef} />
 
             {/* 8 Interactive Portfolio Stations Distributed Around the Arena */}
-            <div
-              className="env-objects"
-              inert={Boolean(activeSection || isTransitioning)}
-            >
+            <div className="env-objects">
               {worldStations.map((station) => (
                 <WorldObject
                   key={station.section}

@@ -40,7 +40,6 @@ function CompassReadout({ showBadge }: { showBadge: boolean }) {
 export default function EnvironmentHUD() {
   const {
     activeSection,
-    isTransitioning,
     hasInteracted,
     openSection,
     resetCamera,
@@ -48,7 +47,7 @@ export default function EnvironmentHUD() {
   } = useEnvironmentNav();
 
   const [indexOpen, setIndexOpen] = useState(false);
-  const effectiveIndexOpen = indexOpen && !activeSection;
+  const effectiveIndexOpen = indexOpen;
   const indexWrapRef = useRef<HTMLDivElement>(null);
   const toggleBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -63,7 +62,7 @@ export default function EnvironmentHUD() {
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !activeSection) {
         setIndexOpen(false);
         toggleBtnRef.current?.focus();
       }
@@ -74,12 +73,11 @@ export default function EnvironmentHUD() {
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [effectiveIndexOpen]);
+  }, [effectiveIndexOpen, activeSection]);
 
   return (
     <div
       className="env-hud"
-      inert={Boolean(activeSection)}
       onPointerDown={(event) => event.stopPropagation()}
       onWheel={(event) => event.stopPropagation()}
     >
@@ -103,14 +101,30 @@ export default function EnvironmentHUD() {
               <CompassReadout showBadge={false} />
             </div>
             <ul className="env-radar-menu__list">
+              <li key="center">
+                <button
+                  type="button"
+                  className="env-radar-menu__item"
+                  onClick={() => {
+                    setIndexOpen(false);
+                    resetCamera();
+                  }}
+                >
+                  <span className="env-radar-menu__az">000°</span>
+                  <span className="env-radar-menu__label">CENTER VIEW</span>
+                </button>
+              </li>
               {worldStations.map((station) => (
                 <li key={station.section}>
                   <button
                     type="button"
                     className="env-radar-menu__item"
-                    disabled={isTransitioning}
-                    onMouseEnter={() => aimAtSection(station.section)}
-                    onFocus={() => aimAtSection(station.section)}
+                    onMouseEnter={() => {
+                      if (!activeSection) aimAtSection(station.section);
+                    }}
+                    onFocus={() => {
+                      if (!activeSection) aimAtSection(station.section);
+                    }}
                     onClick={() => {
                       setIndexOpen(false);
                       openSection(station.section);

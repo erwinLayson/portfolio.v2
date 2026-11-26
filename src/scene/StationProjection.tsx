@@ -12,14 +12,15 @@ export default function StationProjection({
   radiusScale: number;
   anchorRef: RefObject<HTMLDivElement | null>;
 }) {
-  const { activeSection, isClosing, closeSection } = useEnvironmentNav();
+  const { activeSection, isClosing, isTransitioning, closeSection } =
+    useEnvironmentNav();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (activeSection && !isClosing) {
+    if (activeSection && !isClosing && !isTransitioning) {
       closeButtonRef.current?.focus({ preventScroll: true });
     }
-  }, [activeSection, isClosing]);
+  }, [activeSection, isClosing, isTransitioning]);
 
   if (!activeSection) return null;
 
@@ -34,8 +35,8 @@ export default function StationProjection({
 
   return (
     <div
+      key={activeSection}
       ref={anchorRef}
-      data-ready="false"
       className={`env-station-anchor env-station-anchor--${activeSection} ${
         isClosing ? "is-closing" : ""
       }`}
@@ -45,7 +46,6 @@ export default function StationProjection({
       <section
         className="env-station-panel"
         role="dialog"
-        aria-modal="true"
         aria-labelledby="station-dialog-title"
         onPointerDown={(event) => event.stopPropagation()}
         onWheel={(event) => event.stopPropagation()}

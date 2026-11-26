@@ -28,14 +28,40 @@ import {
 } from "./worldConfig";
 
 const DRAG_THRESHOLD_PX = 6;
-const TRANSITION_EPSILON_POS = 1.6;
-const TRANSITION_EPSILON_DEG = 0.28;
 
 type SavedCameraPose = {
   position: Vec3;
   yaw: number;
   pitch: number;
 };
+
+type CameraPose = {
+  x: number;
+  y: number;
+  z: number;
+  yaw: number;
+  pitch: number;
+};
+
+type ActiveTween = {
+  from: CameraPose;
+  to: CameraPose;
+  startTimeMs: number;
+  durationMs: number;
+  kind: "approaching" | "returning" | "resetting";
+  targetSection: SectionId | null;
+};
+
+function easeInOutCubic(t: number): number {
+  const c = clamp(t, 0, 1);
+  return c < 0.5 ? 4 * c * c * c : 1 - Math.pow(-2 * c + 2, 3) / 2;
+}
+
+function computeTransitionDurationMs(from: CameraPose, to: CameraPose): number {
+  const dist = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z);
+  const angular = Math.hypot(to.yaw - from.yaw, to.pitch - from.pitch);
+  return clamp(Math.round(520 + dist * 0.14 + angular * 1.3), 580, 960);
+}
 
 type CameraMode =
   | "explore"
@@ -61,6 +87,7 @@ type FreeCameraState = {
     mode: CameraMode;
     targetSection: SectionId | null;
     previousPose: SavedCameraPose | null;
+    tween: ActiveTween | null;
   };
 };
 
@@ -121,6 +148,7 @@ export function useFreeCameraController({
       mode: "explore",
       targetSection: null,
       previousPose: null,
+      tween: null,
     },
   });
 
@@ -142,6 +170,12 @@ export function useFreeCameraController({
   const activeSectionRef = useRef<SectionId | null>(activeSection);
   const isClosingRef = useRef(isClosing);
   const radiusScaleRef = useRef(radiusScale);
+  const lastNavCommandRef = useRef({
+    activeSection: null as SectionId | null,
+    isClosing: false,
+    resetNonce: 0,
+    radiusScale,
+  });
 
   useEffect(() => {
     activeSectionRef.current = activeSection;
@@ -150,14 +184,25 @@ export function useFreeCameraController({
   }, [activeSection, isClosing, radiusScale]);
 
   const shouldSuppressClick = useCallback(() => {
-    const mode = cameraRef.current.navigation.mode;
-    return (
-      suppressClickRef.current ||
-      mode === "approaching" ||
-      mode === "returning" ||
-      mode === "resetting"
-    );
+    return suppressClickRef.current;
   }, []);
+
+  const interruptTweenToExplore = useCallback(() => {
+    const cam = cameraRef.current;
+    if (cam.navigation.mode !== "returning" && cam.navigation.mode !== "resetting") {
+      return;
+    }
+    cam.navigation.tween = null;
+    cam.navigation.mode = "explore";
+    cam.navigation.targetSection = null;
+    cam.navigation.previousPose = null;
+    cam.position.target = { ...cam.position.current };
+    cam.orientation.targetYaw = cam.orientation.yaw;
+    cam.orientation.targetPitch = cam.orientation.pitch;
+    cam.orientation.velYaw = 0;
+    cam.orientation.velPitch = 0;
+    setIsTransitioning(false);
+  }, [setIsTransitioning]);
 
   // Fixed perspective calibrated per viewport width (never mutated on movement)
   useEffect(() => {
@@ -171,86 +216,138 @@ export function useFreeCameraController({
     return () => window.removeEventListener("resize", updateFixedPerspective);
   }, [viewportRef]);
 
-  // Station Selection & Return transitions (saves & restores exact position + rotation)
+  // Coordinated station selection, switch, exit & reset transition engine
   useEffect(() => {
+    const prevCmd = lastNavCommandRef.current;
+    const resetTriggered = resetNonce !== prevCmd.resetNonce;
+    const sectionChanged = activeSection !== prevCmd.activeSection;
+    const closingTriggered = isClosing && !prevCmd.isClosing;
+    const scaleChangedWhileOpen =
+      radiusScale !== prevCmd.radiusScale && Boolean(activeSection && !isClosing);
+
+    lastNavCommandRef.current = {
+      activeSection,
+      isClosing,
+      resetNonce,
+      radiusScale,
+    };
+
     const cam = cameraRef.current;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const startTween = (
+      to: CameraPose,
+      kind: ActiveTween["kind"],
+      targetSection: SectionId | null,
+    ) => {
+      const liveFrom: CameraPose = {
+        x: cam.position.current.x,
+        y: cam.position.current.y,
+        z: cam.position.current.z,
+        yaw: cam.orientation.yaw,
+        pitch: cam.orientation.pitch,
+      };
+      cam.orientation.velYaw = 0;
+      cam.orientation.velPitch = 0;
+      cam.orientation.targetYaw = to.yaw;
+      cam.orientation.targetPitch = to.pitch;
+      cam.position.target = { x: to.x, y: to.y, z: to.z };
+
+      const durationMs = reducedMotion
+        ? 0
+        : computeTransitionDurationMs(liveFrom, to);
+
+      cam.navigation.tween = {
+        from: liveFrom,
+        to,
+        startTimeMs: performance.now(),
+        durationMs,
+        kind,
+        targetSection,
+      };
+      cam.navigation.mode = kind;
+      cam.navigation.targetSection = targetSection;
+      setIsTransitioning(true);
+    };
+
+    if (resetTriggered) {
+      pressedKeysRef.current.clear();
+      cam.navigation.previousPose = null;
+      startTween(
+        {
+          x: DEFAULT_CAMERA.x,
+          y: DEFAULT_CAMERA.y,
+          z: DEFAULT_CAMERA.z,
+          yaw: shortestAngleTarget(cam.orientation.yaw, DEFAULT_CAMERA.yaw),
+          pitch: DEFAULT_CAMERA.pitch,
+        },
+        "resetting",
+        null,
+      );
+      return;
+    }
 
     if (activeSection && !isClosing) {
-      pressedKeysRef.current.clear();
+      if (sectionChanged || scaleChangedWhileOpen || prevCmd.isClosing) {
+        pressedKeysRef.current.clear();
 
-      if (!cam.navigation.previousPose) {
-        cam.navigation.previousPose = {
-          position: { ...cam.position.target },
-          yaw: cam.orientation.targetYaw,
-          pitch: cam.orientation.targetPitch,
-        };
+        if (!cam.navigation.previousPose) {
+          cam.navigation.previousPose = {
+            position: { ...cam.position.current },
+            yaw: cam.orientation.yaw,
+            pitch: cam.orientation.pitch,
+          };
+        }
+
+        const station = stationMap[activeSection];
+        const scaledR = Math.round(station.radiusPx * radiusScale);
+        const hologramR = scaledR - station.hologramForwardPx;
+        const viewSpotRadius = hologramR - fixedPerspectiveRef.current;
+        const destination = polarToWorld(
+          station.azimuthDeg,
+          viewSpotRadius,
+          station.elevationY,
+        );
+
+        startTween(
+          {
+            x: destination.x,
+            y: destination.y,
+            z: destination.z,
+            yaw: shortestAngleTarget(cam.orientation.yaw, station.azimuthDeg),
+            pitch: 0,
+          },
+          "approaching",
+          activeSection,
+        );
       }
-
-      const station = stationMap[activeSection];
-      const scaledR = Math.round(station.radiusPx * radiusScale);
-      const hologramR = scaledR - station.hologramForwardPx;
-      const viewSpotRadius = hologramR - fixedPerspectiveRef.current;
-      const destination = polarToWorld(
-        station.azimuthDeg,
-        viewSpotRadius,
-        station.elevationY,
-      );
-
-      cam.orientation.velYaw = 0;
-      cam.orientation.velPitch = 0;
-      cam.orientation.targetYaw = shortestAngleTarget(
-        cam.orientation.yaw,
-        station.azimuthDeg,
-      );
-      cam.orientation.targetPitch = 0;
-      cam.position.target = destination;
-
-      cam.navigation.mode = "approaching";
-      cam.navigation.targetSection = activeSection;
-      setIsTransitioning(true);
-    } else if ((!activeSection || isClosing) && cam.navigation.previousPose) {
-      const prev = cam.navigation.previousPose;
-      cam.orientation.velYaw = 0;
-      cam.orientation.velPitch = 0;
-      cam.orientation.targetYaw = shortestAngleTarget(
-        cam.orientation.yaw,
-        normalizeCompassDeg(prev.yaw),
-      );
-      cam.orientation.targetPitch = prev.pitch;
-      cam.position.target = { ...prev.position };
-
-      cam.navigation.mode = "returning";
-      cam.navigation.targetSection = null;
-      setIsTransitioning(true);
-
-      if (!activeSection) {
-        cam.navigation.previousPose = null;
-      }
+      return;
     }
-  }, [activeSection, isClosing, radiusScale, setIsTransitioning]);
 
-  // Explicit Reset Camera command -> restore initial elevated downward-looking pose
-  useEffect(() => {
-    if (resetNonce === 0) return;
-    const cam = cameraRef.current;
-    pressedKeysRef.current.clear();
-    cam.navigation.previousPose = null;
-    cam.orientation.velYaw = 0;
-    cam.orientation.velPitch = 0;
-    cam.orientation.targetYaw = shortestAngleTarget(
-      cam.orientation.yaw,
-      DEFAULT_CAMERA.yaw,
-    );
-    cam.orientation.targetPitch = DEFAULT_CAMERA.pitch;
-    cam.position.target = {
-      x: DEFAULT_CAMERA.x,
-      y: DEFAULT_CAMERA.y,
-      z: DEFAULT_CAMERA.z,
-    };
-    cam.navigation.mode = "resetting";
-    cam.navigation.targetSection = null;
-    setIsTransitioning(true);
-  }, [resetNonce, setIsTransitioning]);
+    if (
+      (closingTriggered ||
+        (!activeSection && sectionChanged && !prevCmd.isClosing)) &&
+      cam.navigation.previousPose
+    ) {
+      const prev = cam.navigation.previousPose;
+      startTween(
+        {
+          x: prev.position.x,
+          y: prev.position.y,
+          z: prev.position.z,
+          yaw: shortestAngleTarget(
+            cam.orientation.yaw,
+            normalizeCompassDeg(prev.yaw),
+          ),
+          pitch: prev.pitch,
+        },
+        "returning",
+        null,
+      );
+    }
+  }, [activeSection, isClosing, resetNonce, radiusScale, setIsTransitioning]);
 
   // Keyboard Tab / Index aim orientation preview (rotates camera without locking orbit)
   useEffect(() => {
@@ -288,7 +385,10 @@ export function useFreeCameraController({
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (activeSectionRef.current) return;
-      if (cameraRef.current.navigation.mode !== "explore") return;
+      const mode = cameraRef.current.navigation.mode;
+      if (mode !== "explore" && mode !== "returning" && mode !== "resetting") {
+        return;
+      }
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
       const target = event.target as HTMLElement | null;
@@ -318,6 +418,9 @@ export function useFreeCameraController({
         if (key.startsWith("arrow")) {
           event.preventDefault();
         }
+        if (key !== "shift" && mode !== "explore") {
+          interruptTweenToExplore();
+        }
         pressedKeysRef.current.add(key);
         if (key !== "shift") {
           markInteracted();
@@ -341,7 +444,7 @@ export function useFreeCameraController({
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [markInteracted]);
+  }, [interruptTweenToExplore, markInteracted]);
 
   // Mouse wheel: move forward/backward freely along viewing direction
   useEffect(() => {
@@ -350,8 +453,14 @@ export function useFreeCameraController({
 
     const onWheel = (event: WheelEvent) => {
       if (activeSectionRef.current) return;
-      if (cameraRef.current.navigation.mode !== "explore") return;
+      const mode = cameraRef.current.navigation.mode;
+      if (mode !== "explore" && mode !== "returning" && mode !== "resetting") {
+        return;
+      }
       event.preventDefault();
+      if (mode !== "explore") {
+        interruptTweenToExplore();
+      }
       markInteracted();
 
       const cam = cameraRef.current;
@@ -374,9 +483,9 @@ export function useFreeCameraController({
 
     viewport.addEventListener("wheel", onWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", onWheel);
-  }, [markInteracted, viewportRef]);
+  }, [interruptTweenToExplore, markInteracted, viewportRef]);
 
-  // Main 60fps Free-Flight simulation, collision resolution & GPU transform loop
+  // Main 60fps Free-Flight & Cubic Ease-In-Out Transition simulation loop
   useEffect(() => {
     let rafId = 0;
     let lastTime = performance.now();
@@ -458,16 +567,63 @@ export function useFreeCameraController({
         }
       }
 
-      // 3. Smoothly interpolate camera position and orientation
-      if (reducedMotion) {
+      // 3. Evaluate programmatic cubic ease-in-out transition OR responsive exploration tracking
+      const activeTween = cam.navigation.tween;
+      if (activeTween) {
+        const progress =
+          reducedMotion || activeTween.durationMs <= 0
+            ? 1
+            : clamp((now - activeTween.startTimeMs) / activeTween.durationMs, 0, 1);
+        const eased = easeInOutCubic(progress);
+
+        cam.position.current.x =
+          activeTween.from.x + (activeTween.to.x - activeTween.from.x) * eased;
+        cam.position.current.y =
+          activeTween.from.y + (activeTween.to.y - activeTween.from.y) * eased;
+        cam.position.current.z =
+          activeTween.from.z + (activeTween.to.z - activeTween.from.z) * eased;
+        cam.orientation.yaw =
+          activeTween.from.yaw +
+          (activeTween.to.yaw - activeTween.from.yaw) * eased;
+        cam.orientation.pitch =
+          activeTween.from.pitch +
+          (activeTween.to.pitch - activeTween.from.pitch) * eased;
+
+        if (progress >= 1) {
+          cam.orientation.yaw = activeTween.to.yaw;
+          cam.orientation.targetYaw = activeTween.to.yaw;
+          cam.orientation.pitch = activeTween.to.pitch;
+          cam.orientation.targetPitch = activeTween.to.pitch;
+          cam.orientation.velYaw = 0;
+          cam.orientation.velPitch = 0;
+          cam.position.current = {
+            x: activeTween.to.x,
+            y: activeTween.to.y,
+            z: activeTween.to.z,
+          };
+          cam.position.target = {
+            x: activeTween.to.x,
+            y: activeTween.to.y,
+            z: activeTween.to.z,
+          };
+          cam.navigation.tween = null;
+
+          if (activeTween.kind === "approaching") {
+            cam.navigation.mode = "focused";
+          } else {
+            cam.navigation.mode = "explore";
+            cam.navigation.targetSection = null;
+            cam.navigation.previousPose = null;
+          }
+          setIsTransitioning(false);
+        }
+      } else if (reducedMotion) {
         cam.orientation.yaw = cam.orientation.targetYaw;
         cam.orientation.pitch = cam.orientation.targetPitch;
         cam.position.current = { ...cam.position.target };
       } else {
-        const isProgrammatic =
-          mode === "approaching" || mode === "returning" || mode === "resetting";
-        const rotSpeed = isProgrammatic ? 7.4 : isDragging ? 26 : 14;
-        const posSpeed = isProgrammatic ? 7.0 : 12;
+        const rotSpeed = isDragging ? 26 : 14;
+        const posSpeed = 12;
         const rotAlpha = 1 - Math.exp(-rotSpeed * dt);
         const posAlpha = 1 - Math.exp(-posSpeed * dt);
 
@@ -487,34 +643,6 @@ export function useFreeCameraController({
             cam.position.current,
             curScale,
           );
-        }
-      }
-
-      // 4. Transition completion checks
-      if (mode === "approaching" || mode === "returning" || mode === "resetting") {
-        const posErr =
-          Math.abs(cam.position.target.x - cam.position.current.x) +
-          Math.abs(cam.position.target.y - cam.position.current.y) +
-          Math.abs(cam.position.target.z - cam.position.current.z);
-        const rotErr =
-          Math.abs(cam.orientation.targetYaw - cam.orientation.yaw) +
-          Math.abs(cam.orientation.targetPitch - cam.orientation.pitch);
-
-        if (
-          reducedMotion ||
-          (posErr < TRANSITION_EPSILON_POS && rotErr < TRANSITION_EPSILON_DEG)
-        ) {
-          cam.orientation.yaw = cam.orientation.targetYaw;
-          cam.orientation.pitch = cam.orientation.targetPitch;
-          cam.position.current = { ...cam.position.target };
-
-          if (mode === "approaching") {
-            cam.navigation.mode = "focused";
-          } else {
-            cam.navigation.mode = "explore";
-            cam.navigation.targetSection = null;
-          }
-          setIsTransitioning(false);
         }
       }
 
@@ -542,19 +670,9 @@ export function useFreeCameraController({
         viewport.style.setProperty("--cam-x", `${cx.toFixed(2)}px`);
         viewport.style.setProperty("--cam-y", `${cy.toFixed(2)}px`);
         viewport.style.setProperty("--cam-z", `${cz.toFixed(2)}px`);
-        viewport.style.setProperty("--floor-near-z", `${floorNearZ}px`);
-        viewport.style.setProperty("--ceil-near-z", `${ceilNearZ}px`);
+        viewport.style.setProperty("--floor-near-z", `${floorNearZ.toFixed(2)}px`);
+        viewport.style.setProperty("--ceil-near-z", `${ceilNearZ.toFixed(2)}px`);
 
-        // Orient central AI presenter around its vertical Y axis toward camera XZ position
-        if (Math.hypot(cx, cz) > 20) {
-          const faceYawDeg = (Math.atan2(cx, cz) * 180) / Math.PI;
-          viewport.style.setProperty("--presenter-yaw", `${faceYawDeg.toFixed(2)}deg`);
-        }
-      }
-
-      // Cull central AI presentation when behind eye plane or when inspecting a station
-      const presenterEl = presenterRef.current;
-      if (presenterEl) {
         const presenterZEye = worldToEyeZ(
           0,
           CENTRAL_PRESENTATION.y,
@@ -565,21 +683,35 @@ export function useFreeCameraController({
           yaw,
           pitch,
         );
-        const hidePresenter =
-          Boolean(activeSectionRef.current) || presenterZEye > -240;
-        if (presenterEl.dataset.hidden !== String(hidePresenter)) {
-          presenterEl.dataset.hidden = String(hidePresenter);
-          presenterEl.style.visibility = hidePresenter ? "hidden" : "visible";
+
+        // Keep central presenter facing camera only while in front of lens so passing near origin never flips it 180deg
+        if (presenterZEye < -90 && Math.hypot(cx, cz) > 48) {
+          const faceYawDeg = (Math.atan2(cx, cz) * 180) / Math.PI;
+          viewport.style.setProperty("--presenter-yaw", `${faceYawDeg.toFixed(2)}deg`);
+        }
+
+        // Cull central AI presentation strictly when behind the near eye plane
+        const presenterEl = presenterRef.current;
+        if (presenterEl) {
+          const hidePresenter = presenterZEye > -75;
+          if (presenterEl.dataset.hidden !== String(hidePresenter)) {
+            presenterEl.dataset.hidden = String(hidePresenter);
+            presenterEl.style.visibility = hidePresenter ? "hidden" : "visible";
+          }
         }
       }
 
-      // Hide ceiling canopy when viewing from above so top-down view is unobstructed
+      // Smoothly reveal overhead canopy as camera descends below elevated overview
       const ceilingEl = ceilingStageRef.current;
       if (ceilingEl) {
-        const showCeiling = cy > CEILING_ELEVATION_Y + 40;
+        const ceilingAlpha = clamp((cy + 720) / 260, 0, 1);
+        const showCeiling = ceilingAlpha > 0.004;
         if (ceilingEl.dataset.visible !== String(showCeiling)) {
           ceilingEl.dataset.visible = String(showCeiling);
           ceilingEl.style.visibility = showCeiling ? "visible" : "hidden";
+        }
+        if (showCeiling) {
+          ceilingEl.style.opacity = ceilingAlpha.toFixed(3);
         }
       }
 
@@ -600,7 +732,7 @@ export function useFreeCameraController({
           yaw,
           pitch,
         );
-        const isBehind = zEye > -190;
+        const isBehind = zEye > -45;
         if (el.dataset.behind !== String(isBehind)) {
           el.dataset.behind = String(isBehind);
           el.style.visibility = isBehind ? "hidden" : "visible";
@@ -623,7 +755,7 @@ export function useFreeCameraController({
           yaw,
           pitch,
         );
-        const isBehind = zEye > -290;
+        const isBehind = zEye > -55;
         if (el.dataset.behind !== String(isBehind)) {
           el.dataset.behind = String(isBehind);
           el.style.visibility = isBehind ? "hidden" : "visible";
@@ -646,14 +778,14 @@ export function useFreeCameraController({
           yaw,
           pitch,
         );
-        const isBehind = zEye > -220;
+        const isBehind = zEye > -30;
         if (el.dataset.behind !== String(isBehind)) {
           el.dataset.behind = String(isBehind);
           el.style.visibility = isBehind ? "hidden" : "visible";
         }
       }
 
-      // 6. Gate StationProjection visibility until camera aligns with target station
+      // 6. Reveal StationProjection once camera nears & aligns with target station
       const anchorEl = stationAnchorRef.current;
       const curActive = activeSectionRef.current;
       if (anchorEl && curActive) {
@@ -671,10 +803,15 @@ export function useFreeCameraController({
           yaw,
           pitch,
         );
+        const maxReadyDist = fixedPerspectiveRef.current + 360;
         const ready =
-          !isClosingRef.current && angleOff <= 38 && zEye < -260;
-        if (anchorEl.dataset.ready !== String(ready)) {
-          anchorEl.dataset.ready = String(ready);
+          !isClosingRef.current &&
+          angleOff <= 30 &&
+          Math.abs(pitch) <= 16 &&
+          zEye < -260 &&
+          zEye >= -maxReadyDist;
+        if (anchorEl.classList.contains("is-ready") !== ready) {
+          anchorEl.classList.toggle("is-ready", ready);
         }
       }
 
@@ -712,7 +849,10 @@ export function useFreeCameraController({
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (activeSectionRef.current) return;
-      if (cameraRef.current.navigation.mode !== "explore") return;
+      const mode = cameraRef.current.navigation.mode;
+      if (mode !== "explore" && mode !== "returning" && mode !== "resetting") {
+        return;
+      }
       if (event.pointerType === "mouse" && event.button !== 0) return;
 
       pointersRef.current.set(event.pointerId, {
@@ -735,6 +875,7 @@ export function useFreeCameraController({
         cam.orientation.velYaw = 0;
         cam.orientation.velPitch = 0;
       } else if (pointersRef.current.size === 2) {
+        interruptTweenToExplore();
         const pts = Array.from(pointersRef.current.values());
         session.pinchLastDist = Math.hypot(
           pts[1].x - pts[0].x,
@@ -746,13 +887,16 @@ export function useFreeCameraController({
         markInteracted();
       }
     },
-    [markInteracted],
+    [interruptTweenToExplore, markInteracted],
   );
 
   const handlePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (activeSectionRef.current) return;
-      if (cameraRef.current.navigation.mode !== "explore") return;
+      const mode = cameraRef.current.navigation.mode;
+      if (mode !== "explore" && mode !== "returning" && mode !== "resetting") {
+        return;
+      }
       if (!pointersRef.current.has(event.pointerId)) return;
 
       pointersRef.current.set(event.pointerId, {
@@ -764,6 +908,7 @@ export function useFreeCameraController({
       const cam = cameraRef.current;
 
       if (pointersRef.current.size === 2 && session.pinchLastDist !== null) {
+        interruptTweenToExplore();
         const pts = Array.from(pointersRef.current.values());
         const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
         const deltaDist = dist - session.pinchLastDist;
@@ -793,6 +938,7 @@ export function useFreeCameraController({
       );
 
       if (!session.isDragging && totalMoved >= DRAG_THRESHOLD_PX) {
+        interruptTweenToExplore();
         session.isDragging = true;
         suppressClickRef.current = true;
         setIsDraggingUI(true);
@@ -826,7 +972,7 @@ export function useFreeCameraController({
       session.lastY = event.clientY;
       session.lastTime = now;
     },
-    [markInteracted],
+    [interruptTweenToExplore, markInteracted],
   );
 
   const endPointer = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
