@@ -40,6 +40,12 @@
   );
 }
 
+.station-holo-portrait__frame picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .station-holo-portrait__img {
   display: block;
   width: 100%;

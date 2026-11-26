@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import mePortrait from "../assets/me.png";
+import me480Avif from "../assets/portrait/me-480.avif";
+import me680Avif from "../assets/portrait/me-680.avif";
+import me480Webp from "../assets/portrait/me-480.webp";
+import me680Webp from "../assets/portrait/me-680.webp";
+import me680Png from "../assets/portrait/me-680.png";
 import { aboutStats } from "../constants/about";
 import { chronicleChapters } from "../constants/chronicle";
 import { experience } from "../constants/experience";
@@ -123,11 +127,27 @@ function AboutStation() {
     <div className="station-grid station-grid--about">
       <div className="station-holo-portrait">
         <div className="station-holo-portrait__frame">
-          <img
-            src={mePortrait}
-            alt={`Portrait of ${profile.name}`}
-            className="station-holo-portrait__img"
-          />
+          <picture>
+            <source
+              type="image/avif"
+              srcSet={`${me480Avif} 480w, ${me680Avif} 680w`}
+              sizes="240px"
+            />
+            <source
+              type="image/webp"
+              srcSet={`${me480Webp} 480w, ${me680Webp} 680w`}
+              sizes="240px"
+            />
+            <img
+              src={me680Png}
+              width={240}
+              height={240}
+              alt={`Portrait of ${profile.name}`}
+              className="station-holo-portrait__img"
+              loading="lazy"
+              fetchPriority="low"
+            />
+          </picture>
           <span className="station-holo-portrait__scan" aria-hidden="true" />
         </div>
         {profile.openToWork && (

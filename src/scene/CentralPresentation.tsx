@@ -1,5 +1,11 @@
 import type { RefObject } from "react";
-import mePortrait from "../assets/me.png";
+import me480Avif from "../assets/portrait/me-480.avif";
+import me680Avif from "../assets/portrait/me-680.avif";
+import me960Avif from "../assets/portrait/me-960.avif";
+import me480Webp from "../assets/portrait/me-480.webp";
+import me680Webp from "../assets/portrait/me-680.webp";
+import me960Webp from "../assets/portrait/me-960.webp";
+import me680Png from "../assets/portrait/me-680.png";
 import { profile } from "../constants/profile";
 
 const presenterParticles = Array.from({ length: 16 }, (_, i) => {
@@ -46,12 +52,28 @@ export default function CentralPresentation({
 
       {/* Floating frameless cutout portrait */}
       <div className="ai-presenter__figure">
-        <img
-          src={mePortrait}
-          alt={`${profile.name} — ${profile.role}`}
-          className="ai-presenter__portrait"
-          draggable={false}
-        />
+        <picture className="ai-presenter__picture">
+          <source
+            type="image/avif"
+            srcSet={`${me480Avif} 480w, ${me680Avif} 680w, ${me960Avif} 960w`}
+            sizes="(max-width: 767px) 360px, 620px"
+          />
+          <source
+            type="image/webp"
+            srcSet={`${me480Webp} 480w, ${me680Webp} 680w, ${me960Webp} 960w`}
+            sizes="(max-width: 767px) 360px, 620px"
+          />
+          <img
+            src={me680Png}
+            width={680}
+            height={680}
+            alt={`${profile.name} — ${profile.role}`}
+            className="ai-presenter__portrait"
+            fetchPriority="high"
+            loading="eager"
+            draggable={false}
+          />
+        </picture>
       </div>
 
       {/* 3D dimensional typography floating directly beneath the portrait */}
