@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import ResumePage from "./pages/ResumePage";
+import { lazy, Suspense, useEffect, useState } from "react";
 import Environment3D from "./scene/Environment3D";
 import { EnvironmentNavProvider } from "./state/EnvironmentNavProvider";
+
+const ResumePage = lazy(() => import("./pages/ResumePage"));
 
 function checkIsResumeRoute(): boolean {
   if (typeof window === "undefined") return false;
@@ -27,7 +28,11 @@ export default function App() {
   }, []);
 
   if (isResume) {
-    return <ResumePage />;
+    return (
+      <Suspense fallback={null}>
+        <ResumePage />
+      </Suspense>
+    );
   }
 
   return (

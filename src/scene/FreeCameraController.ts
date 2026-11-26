@@ -170,6 +170,7 @@ export function useFreeCameraController({
   const activeSectionRef = useRef<SectionId | null>(activeSection);
   const isClosingRef = useRef(isClosing);
   const radiusScaleRef = useRef(radiusScale);
+  const wakeSimulationRef = useRef<() => void>(() => {});
   const lastNavCommandRef = useRef({
     activeSection: null as SectionId | null,
     isClosing: false,
@@ -270,6 +271,7 @@ export function useFreeCameraController({
       cam.navigation.mode = kind;
       cam.navigation.targetSection = targetSection;
       setIsTransitioning(true);
+      wakeSimulationRef.current();
     };
 
     if (resetTriggered) {
@@ -379,6 +381,7 @@ export function useFreeCameraController({
       targetHeadingDeg,
     );
     cam.orientation.targetPitch = targetPitchDeg;
+    wakeSimulationRef.current();
   }, [aimRequest, activeSection, radiusScale]);
 
   // Keyboard input listeners (WASD / QE / Arrows / Shift)
@@ -424,6 +427,7 @@ export function useFreeCameraController({
         pressedKeysRef.current.add(key);
         if (key !== "shift") {
           markInteracted();
+          wakeSimulationRef.current();
         }
       }
     };
@@ -479,17 +483,19 @@ export function useFreeCameraController({
         candidate,
         radiusScaleRef.current,
       );
+      wakeSimulationRef.current();
     };
 
     viewport.addEventListener("wheel", onWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", onWheel);
   }, [interruptTweenToExplore, markInteracted, viewportRef]);
 
-  // Main 60fps Free-Flight & Cubic Ease-In-Out Transition simulation loop
+  // Main demand-driven Free-Flight & Cubic Ease-In-Out Transition simulation loop
   useEffect(() => {
     let rafId = 0;
     let lastTime = performance.now();
     let lastTelemetryTime = 0;
+    let lastCameraCssKey = "";
     const reducedMotionQuery = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     );
@@ -652,171 +658,214 @@ export function useFreeCameraController({
       const yaw = cam.orientation.yaw;
       const pitch = cam.orientation.pitch;
 
-      const viewport = viewportRef.current;
-      if (viewport) {
-        const floorNearZ = computeSafePlaneNearZ(
-          FLOOR_ELEVATION_Y - cy,
-          pitch,
-          155,
-        );
-        const ceilNearZ = computeSafePlaneNearZ(
-          CEILING_ELEVATION_Y - cy,
-          pitch,
-          155,
-        );
+      const floorNearZ = computeSafePlaneNearZ(
+        FLOOR_ELEVATION_Y - cy,
+        pitch,
+        155,
+      );
+      const ceilNearZ = computeSafePlaneNearZ(
+        CEILING_ELEVATION_Y - cy,
+        pitch,
+        155,
+      );
 
-        viewport.style.setProperty("--cam-yaw", `${yaw.toFixed(3)}deg`);
-        viewport.style.setProperty("--cam-pitch", `${pitch.toFixed(3)}deg`);
-        viewport.style.setProperty("--cam-x", `${cx.toFixed(2)}px`);
-        viewport.style.setProperty("--cam-y", `${cy.toFixed(2)}px`);
-        viewport.style.setProperty("--cam-z", `${cz.toFixed(2)}px`);
-        viewport.style.setProperty("--floor-near-z", `${floorNearZ.toFixed(2)}px`);
-        viewport.style.setProperty("--ceil-near-z", `${ceilNearZ.toFixed(2)}px`);
+      const yawStr = `${yaw.toFixed(3)}deg`;
+      const pitchStr = `${pitch.toFixed(3)}deg`;
+      const xStr = `${cx.toFixed(2)}px`;
+      const yStr = `${cy.toFixed(2)}px`;
+      const zStr = `${cz.toFixed(2)}px`;
+      const floorStr = `${floorNearZ.toFixed(2)}px`;
+      const ceilStr = `${ceilNearZ.toFixed(2)}px`;
+      const cssKey = `${yawStr}|${pitchStr}|${xStr}|${yStr}|${zStr}|${floorStr}|${ceilStr}|${curScale}|${String(activeSectionRef.current)}|${isClosingRef.current}`;
 
-        const presenterZEye = worldToEyeZ(
-          0,
-          CENTRAL_PRESENTATION.y,
-          0,
-          cx,
-          cy,
-          cz,
-          yaw,
-          pitch,
-        );
+      const cssChanged = cssKey !== lastCameraCssKey;
+      if (cssChanged) {
+        lastCameraCssKey = cssKey;
 
-        // Keep central presenter facing camera only while in front of lens so passing near origin never flips it 180deg
-        if (presenterZEye < -90 && Math.hypot(cx, cz) > 48) {
-          const faceYawDeg = (Math.atan2(cx, cz) * 180) / Math.PI;
-          viewport.style.setProperty("--presenter-yaw", `${faceYawDeg.toFixed(2)}deg`);
+        const viewport = viewportRef.current;
+        if (viewport) {
+          viewport.style.setProperty("--cam-yaw", yawStr);
+          viewport.style.setProperty("--cam-pitch", pitchStr);
+          viewport.style.setProperty("--cam-x", xStr);
+          viewport.style.setProperty("--cam-y", yStr);
+          viewport.style.setProperty("--cam-z", zStr);
+          viewport.style.setProperty("--floor-near-z", floorStr);
+          viewport.style.setProperty("--ceil-near-z", ceilStr);
+
+          const presenterZEye = worldToEyeZ(
+            0,
+            CENTRAL_PRESENTATION.y,
+            0,
+            cx,
+            cy,
+            cz,
+            yaw,
+            pitch,
+          );
+
+          // Keep central presenter facing camera only while in front of lens so passing near origin never flips it 180deg
+          if (presenterZEye < -90 && Math.hypot(cx, cz) > 48) {
+            const faceYawDeg = (Math.atan2(cx, cz) * 180) / Math.PI;
+            viewport.style.setProperty("--presenter-yaw", `${faceYawDeg.toFixed(2)}deg`);
+          }
+
+          // Cull central AI presentation strictly when behind the near eye plane
+          const presenterEl = presenterRef.current;
+          if (presenterEl) {
+            const hidePresenter = presenterZEye > -75;
+            if (presenterEl.dataset.hidden !== String(hidePresenter)) {
+              presenterEl.dataset.hidden = String(hidePresenter);
+              presenterEl.style.visibility = hidePresenter ? "hidden" : "visible";
+            }
+          }
         }
 
-        // Cull central AI presentation strictly when behind the near eye plane
-        const presenterEl = presenterRef.current;
-        if (presenterEl) {
-          const hidePresenter = presenterZEye > -75;
-          if (presenterEl.dataset.hidden !== String(hidePresenter)) {
-            presenterEl.dataset.hidden = String(hidePresenter);
-            presenterEl.style.visibility = hidePresenter ? "hidden" : "visible";
+        // Smoothly reveal overhead canopy as camera descends below elevated overview
+        const ceilingEl = ceilingStageRef.current;
+        if (ceilingEl) {
+          const ceilingAlpha = clamp((cy + 720) / 260, 0, 1);
+          const showCeiling = ceilingAlpha > 0.004;
+          if (ceilingEl.dataset.visible !== String(showCeiling)) {
+            ceilingEl.dataset.visible = String(showCeiling);
+            ceilingEl.style.visibility = showCeiling ? "visible" : "hidden";
+          }
+          if (showCeiling) {
+            ceilingEl.style.opacity = ceilingAlpha.toFixed(3);
+          }
+        }
+
+        // 5. Eye-plane frustum culling strictly offscreen behind the camera
+        const objectEls = objectElsRef.current;
+        for (const station of worldStations) {
+          const el = objectEls[station.section];
+          if (!el) continue;
+          const r = Math.round(station.radiusPx * curScale);
+          const pos = polarToWorld(station.azimuthDeg, r, station.elevationY);
+          const zEye = worldToEyeZ(
+            pos.x,
+            pos.y,
+            pos.z,
+            cx,
+            cy,
+            cz,
+            yaw,
+            pitch,
+          );
+          const isBehind = zEye > -45;
+          if (el.dataset.behind !== String(isBehind)) {
+            el.dataset.behind = String(isBehind);
+            el.style.visibility = isBehind ? "hidden" : "visible";
+          }
+        }
+
+        const horizonEls = horizonElsRef.current;
+        for (let i = 0; i < HORIZON_PANELS; i += 1) {
+          const el = horizonEls[i];
+          if (!el) continue;
+          const az = (i * 360) / HORIZON_PANELS;
+          const pos = polarToWorld(az, HORIZON_RADIUS_PX, 0);
+          const zEye = worldToEyeZ(
+            pos.x,
+            pos.y,
+            pos.z,
+            cx,
+            cy,
+            cz,
+            yaw,
+            pitch,
+          );
+          const isBehind = zEye > -55;
+          if (el.dataset.behind !== String(isBehind)) {
+            el.dataset.behind = String(isBehind);
+            el.style.visibility = isBehind ? "hidden" : "visible";
+          }
+        }
+
+        const particleEls = particleElsRef.current;
+        for (let i = 0; i < particleCoords.length; i += 1) {
+          const el = particleEls[i];
+          if (!el) continue;
+          const star = particleCoords[i];
+          const pos = polarToWorld(star.azimuthDeg, star.radius, star.y);
+          const zEye = worldToEyeZ(
+            pos.x,
+            pos.y,
+            pos.z,
+            cx,
+            cy,
+            cz,
+            yaw,
+            pitch,
+          );
+          const isBehind = zEye > -30;
+          if (el.dataset.behind !== String(isBehind)) {
+            el.dataset.behind = String(isBehind);
+            el.style.visibility = isBehind ? "hidden" : "visible";
+          }
+        }
+
+        // 6. Reveal StationProjection once camera nears & aligns with target station
+        const anchorEl = stationAnchorRef.current;
+        const curActive = activeSectionRef.current;
+        if (anchorEl && curActive) {
+          const st = stationMap[curActive];
+          const angleOff = Math.abs(shortestAngleDelta(yaw, st.azimuthDeg));
+          const r = Math.round(st.radiusPx * curScale) - st.hologramForwardPx;
+          const pos = polarToWorld(st.azimuthDeg, r, st.elevationY);
+          const zEye = worldToEyeZ(
+            pos.x,
+            pos.y,
+            pos.z,
+            cx,
+            cy,
+            cz,
+            yaw,
+            pitch,
+          );
+          const maxReadyDist = fixedPerspectiveRef.current + 360;
+          const ready =
+            !isClosingRef.current &&
+            angleOff <= 30 &&
+            Math.abs(pitch) <= 16 &&
+            zEye < -260 &&
+            zEye >= -maxReadyDist;
+          if (anchorEl.classList.contains("is-ready") !== ready) {
+            anchorEl.classList.toggle("is-ready", ready);
           }
         }
       }
 
-      // Smoothly reveal overhead canopy as camera descends below elevated overview
-      const ceilingEl = ceilingStageRef.current;
-      if (ceilingEl) {
-        const ceilingAlpha = clamp((cy + 720) / 260, 0, 1);
-        const showCeiling = ceilingAlpha > 0.004;
-        if (ceilingEl.dataset.visible !== String(showCeiling)) {
-          ceilingEl.dataset.visible = String(showCeiling);
-          ceilingEl.style.visibility = showCeiling ? "visible" : "hidden";
-        }
-        if (showCeiling) {
-          ceilingEl.style.opacity = ceilingAlpha.toFixed(3);
-        }
-      }
+      const posSettled =
+        Math.abs(cam.position.target.x - cx) < 0.05 &&
+        Math.abs(cam.position.target.y - cy) < 0.05 &&
+        Math.abs(cam.position.target.z - cz) < 0.05;
+      const rotSettled =
+        Math.abs(cam.orientation.targetYaw - yaw) < 0.01 &&
+        Math.abs(cam.orientation.targetPitch - pitch) < 0.01 &&
+        Math.abs(cam.orientation.velYaw) <= 0.08 &&
+        Math.abs(cam.orientation.velPitch) <= 0.08;
+      const keys = pressedKeysRef.current;
+      const hasMovementKey =
+        keys.has("w") ||
+        keys.has("a") ||
+        keys.has("s") ||
+        keys.has("d") ||
+        keys.has("q") ||
+        keys.has("e") ||
+        keys.has("arrowup") ||
+        keys.has("arrowdown") ||
+        keys.has("arrowleft") ||
+        keys.has("arrowright");
 
-      // 5. Eye-plane frustum culling strictly offscreen behind the camera
-      const objectEls = objectElsRef.current;
-      for (const station of worldStations) {
-        const el = objectEls[station.section];
-        if (!el) continue;
-        const r = Math.round(station.radiusPx * curScale);
-        const pos = polarToWorld(station.azimuthDeg, r, station.elevationY);
-        const zEye = worldToEyeZ(
-          pos.x,
-          pos.y,
-          pos.z,
-          cx,
-          cy,
-          cz,
-          yaw,
-          pitch,
-        );
-        const isBehind = zEye > -45;
-        if (el.dataset.behind !== String(isBehind)) {
-          el.dataset.behind = String(isBehind);
-          el.style.visibility = isBehind ? "hidden" : "visible";
-        }
-      }
-
-      const horizonEls = horizonElsRef.current;
-      for (let i = 0; i < HORIZON_PANELS; i += 1) {
-        const el = horizonEls[i];
-        if (!el) continue;
-        const az = (i * 360) / HORIZON_PANELS;
-        const pos = polarToWorld(az, HORIZON_RADIUS_PX, 0);
-        const zEye = worldToEyeZ(
-          pos.x,
-          pos.y,
-          pos.z,
-          cx,
-          cy,
-          cz,
-          yaw,
-          pitch,
-        );
-        const isBehind = zEye > -55;
-        if (el.dataset.behind !== String(isBehind)) {
-          el.dataset.behind = String(isBehind);
-          el.style.visibility = isBehind ? "hidden" : "visible";
-        }
-      }
-
-      const particleEls = particleElsRef.current;
-      for (let i = 0; i < particleCoords.length; i += 1) {
-        const el = particleEls[i];
-        if (!el) continue;
-        const star = particleCoords[i];
-        const pos = polarToWorld(star.azimuthDeg, star.radius, star.y);
-        const zEye = worldToEyeZ(
-          pos.x,
-          pos.y,
-          pos.z,
-          cx,
-          cy,
-          cz,
-          yaw,
-          pitch,
-        );
-        const isBehind = zEye > -30;
-        if (el.dataset.behind !== String(isBehind)) {
-          el.dataset.behind = String(isBehind);
-          el.style.visibility = isBehind ? "hidden" : "visible";
-        }
-      }
-
-      // 6. Reveal StationProjection once camera nears & aligns with target station
-      const anchorEl = stationAnchorRef.current;
-      const curActive = activeSectionRef.current;
-      if (anchorEl && curActive) {
-        const st = stationMap[curActive];
-        const angleOff = Math.abs(shortestAngleDelta(yaw, st.azimuthDeg));
-        const r = Math.round(st.radiusPx * curScale) - st.hologramForwardPx;
-        const pos = polarToWorld(st.azimuthDeg, r, st.elevationY);
-        const zEye = worldToEyeZ(
-          pos.x,
-          pos.y,
-          pos.z,
-          cx,
-          cy,
-          cz,
-          yaw,
-          pitch,
-        );
-        const maxReadyDist = fixedPerspectiveRef.current + 360;
-        const ready =
-          !isClosingRef.current &&
-          angleOff <= 30 &&
-          Math.abs(pitch) <= 16 &&
-          zEye < -260 &&
-          zEye >= -maxReadyDist;
-        if (anchorEl.classList.contains("is-ready") !== ready) {
-          anchorEl.classList.toggle("is-ready", ready);
-        }
-      }
+      const keepRunning =
+        Boolean(cam.navigation.tween) ||
+        dragRef.current.isDragging ||
+        hasMovementKey ||
+        !posSettled ||
+        !rotSettled;
 
       // 7. Throttled HUD telemetry publication (zero React rerenders)
-      if (now - lastTelemetryTime > 80) {
+      if (!keepRunning || (cssChanged && now - lastTelemetryTime > 80)) {
         lastTelemetryTime = now;
         publishTelemetry({
           yawDeg: Math.round(yaw),
@@ -827,11 +876,31 @@ export function useFreeCameraController({
         });
       }
 
-      rafId = requestAnimationFrame(step);
+      if (keepRunning) {
+        rafId = requestAnimationFrame(step);
+      } else {
+        rafId = 0;
+        cam.position.current = { ...cam.position.target };
+        cam.orientation.yaw = cam.orientation.targetYaw;
+        cam.orientation.pitch = cam.orientation.targetPitch;
+      }
     };
 
-    rafId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafId);
+    const wakeSimulation = () => {
+      if (!rafId) {
+        lastTime = performance.now();
+        rafId = requestAnimationFrame(step);
+      }
+    };
+
+    wakeSimulationRef.current = wakeSimulation;
+    step(performance.now());
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = 0;
+      wakeSimulationRef.current = () => {};
+    };
   }, [
     ceilingStageRef,
     horizonElsRef,
@@ -885,6 +954,7 @@ export function useFreeCameraController({
         suppressClickRef.current = true;
         setIsDraggingUI(true);
         markInteracted();
+        wakeSimulationRef.current();
       }
     },
     [interruptTweenToExplore, markInteracted],
@@ -927,6 +997,7 @@ export function useFreeCameraController({
           },
           radiusScaleRef.current,
         );
+        wakeSimulationRef.current();
         return;
       }
 
@@ -971,6 +1042,7 @@ export function useFreeCameraController({
       session.lastX = event.clientX;
       session.lastY = event.clientY;
       session.lastTime = now;
+      wakeSimulationRef.current();
     },
     [interruptTweenToExplore, markInteracted],
   );

@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import type { CSSProperties, RefObject } from "react";
 import { CloseIcon } from "../components/icons";
 import { sectionMeta, useEnvironmentNav } from "../state/environmentNav";
 import { stationMap } from "./worldConfig";
-import StationContent from "./StationContent";
+
+const StationContent = lazy(() => import("./StationContent"));
 
 export default function StationProjection({
   radiusScale,
@@ -70,7 +71,9 @@ export default function StationProjection({
         </header>
 
         <div className="env-station-body" key={activeSection}>
-          <StationContent section={activeSection} />
+          <Suspense fallback={null}>
+            <StationContent section={activeSection} />
+          </Suspense>
         </div>
 
         <footer className="env-station-footer">
