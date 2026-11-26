@@ -3,35 +3,20 @@ import { useEnvironmentNav } from "../state/environmentNav";
 import { normalizeCompassDeg } from "./cameraMath";
 import { worldStations } from "./worldConfig";
 
-function getNearestStationLabel(compassDeg: number): string {
-  const normalized = normalizeCompassDeg(compassDeg);
-  let best = worldStations[0];
-  let bestDelta = 360;
-  for (const station of worldStations) {
-    let delta = Math.abs(normalized - station.azimuthDeg);
-    if (delta > 180) delta = 360 - delta;
-    if (delta < bestDelta) {
-      bestDelta = delta;
-      best = station;
-    }
-  }
-  return bestDelta <= 25 ? best.label : "OPEN ARENA";
-}
-
 function CompassReadout({ showBadge }: { showBadge: boolean }) {
   const { subscribeTelemetry } = useEnvironmentNav();
   const degRef = useRef<HTMLSpanElement>(null);
-  const sectorRef = useRef<HTMLSpanElement>(null);
+  const posRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    return subscribeTelemetry(({ yawDeg }) => {
+    return subscribeTelemetry(({ yawDeg, posX, posY, posZ }) => {
       const normalized = Math.round(normalizeCompassDeg(yawDeg));
       const formatted = `${String(normalized).padStart(3, "0")}°`;
       if (degRef.current) {
         degRef.current.textContent = formatted;
       }
-      if (sectorRef.current) {
-        sectorRef.current.textContent = getNearestStationLabel(normalized);
+      if (posRef.current) {
+        posRef.current.textContent = `X${posX} · Y${posY} · Z${posZ}`;
       }
     });
   }, [subscribeTelemetry]);
@@ -42,8 +27,8 @@ function CompassReadout({ showBadge }: { showBadge: boolean }) {
         <span ref={degRef} className="env-compass-deg">
           000°
         </span>
-        <span ref={sectorRef} className="env-compass-sector">
-          ABOUT ME
+        <span ref={posRef} className="env-compass-sector">
+          X0 · Y-380 · Z420
         </span>
       </span>
     );
@@ -101,7 +86,7 @@ export default function EnvironmentHUD() {
       {!hasInteracted && !activeSection && (
         <div className="env-intro-hint" role="status" aria-live="polite">
           <span className="env-intro-hint__dot" aria-hidden="true" />
-          <span>DRAG TO EXPLORE · SCROLL TO ZOOM · SELECT OBJECTS</span>
+          <span>DRAG TO LOOK · WASD / QE TO MOVE · SCROLL TO FLY · CLICK STATIONS</span>
         </div>
       )}
 

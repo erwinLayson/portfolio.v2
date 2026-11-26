@@ -26,7 +26,9 @@ export function EnvironmentNavProvider({ children }: { children: ReactNode }) {
   const latestTelemetry = useRef<CameraTelemetry>({
     yawDeg: DEFAULT_CAMERA.yaw,
     pitchDeg: DEFAULT_CAMERA.pitch,
-    zoomPx: DEFAULT_CAMERA.zoom,
+    posX: DEFAULT_CAMERA.x,
+    posY: DEFAULT_CAMERA.y,
+    posZ: DEFAULT_CAMERA.z,
   });
 
   const registerObjectTrigger = useCallback(

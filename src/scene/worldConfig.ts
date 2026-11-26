@@ -11,13 +11,14 @@ export type WorldStationConfig = {
   widthPx: number;
   heightPx: number;
   hologramForwardPx: number;
+  collisionRadiusPx: number;
+  collisionHalfHeightPx: number;
   traceHighlight?: boolean;
 };
 
 /**
  * Spatial distribution of the 8 interactive portfolio stations around the
- * full 360-degree exhibition arena. Angles use clockwise compass azimuth
- * (0deg = North/Front, 90deg = East/Right, 180deg = South/Back, 270deg = West/Left).
+ * 360-degree free-roaming exhibition arena.
  */
 export const worldStations: WorldStationConfig[] = [
   {
@@ -26,11 +27,13 @@ export const worldStations: WorldStationConfig[] = [
     code: "01 · IDENTITY",
     tagline: "Developer profile & background",
     azimuthDeg: 0,
-    radiusPx: 880,
+    radiusPx: 1220,
     elevationY: -10,
     widthPx: 170,
     heightPx: 148,
     hologramForwardPx: 165,
+    collisionRadiusPx: 145,
+    collisionHalfHeightPx: 140,
     traceHighlight: true,
   },
   {
@@ -39,11 +42,13 @@ export const worldStations: WorldStationConfig[] = [
     code: "02 · SYSTEMS",
     tagline: "Featured full-stack applications",
     azimuthDeg: 45,
-    radiusPx: 980,
+    radiusPx: 1340,
     elevationY: -78,
     widthPx: 174,
     heightPx: 162,
     hologramForwardPx: 170,
+    collisionRadiusPx: 150,
+    collisionHalfHeightPx: 145,
     traceHighlight: true,
   },
   {
@@ -52,11 +57,13 @@ export const worldStations: WorldStationConfig[] = [
     code: "03 · MATRIX",
     tagline: "Frontend, backend, databases & tools",
     azimuthDeg: 90,
-    radiusPx: 910,
+    radiusPx: 1250,
     elevationY: 22,
     widthPx: 150,
     heightPx: 146,
     hologramForwardPx: 160,
+    collisionRadiusPx: 140,
+    collisionHalfHeightPx: 135,
   },
   {
     section: "experience",
@@ -64,11 +71,13 @@ export const worldStations: WorldStationConfig[] = [
     code: "04 · TIMELINE",
     tagline: "Academic & engineering milestones",
     azimuthDeg: 135,
-    radiusPx: 960,
+    radiusPx: 1310,
     elevationY: -40,
     widthPx: 158,
     heightPx: 152,
     hologramForwardPx: 165,
+    collisionRadiusPx: 145,
+    collisionHalfHeightPx: 140,
   },
   {
     section: "resume",
@@ -76,11 +85,13 @@ export const worldStations: WorldStationConfig[] = [
     code: "05 · DOCUMENT",
     tagline: "ATS preview & PDF export",
     azimuthDeg: 180,
-    radiusPx: 930,
+    radiusPx: 1270,
     elevationY: -50,
     widthPx: 148,
     heightPx: 166,
     hologramForwardPx: 165,
+    collisionRadiusPx: 145,
+    collisionHalfHeightPx: 145,
     traceHighlight: true,
   },
   {
@@ -89,11 +100,13 @@ export const worldStations: WorldStationConfig[] = [
     code: "06 · UPLINK",
     tagline: "Direct email & social channels",
     azimuthDeg: 225,
-    radiusPx: 950,
+    radiusPx: 1290,
     elevationY: -84,
     widthPx: 156,
     heightPx: 148,
     hologramForwardPx: 165,
+    collisionRadiusPx: 145,
+    collisionHalfHeightPx: 140,
   },
   {
     section: "backstage",
@@ -101,11 +114,13 @@ export const worldStations: WorldStationConfig[] = [
     code: "07 · ARCHIVE",
     tagline: "Engineering workflow & OJT gallery",
     azimuthDeg: 270,
-    radiusPx: 900,
+    radiusPx: 1240,
     elevationY: 16,
     widthPx: 154,
     heightPx: 156,
     hologramForwardPx: 160,
+    collisionRadiusPx: 145,
+    collisionHalfHeightPx: 140,
   },
   {
     section: "testimonial",
@@ -113,11 +128,13 @@ export const worldStations: WorldStationConfig[] = [
     code: "08 · FEEDBACK",
     tagline: "Verified endorsements status",
     azimuthDeg: 315,
-    radiusPx: 990,
+    radiusPx: 1350,
     elevationY: -48,
     widthPx: 148,
     heightPx: 146,
     hologramForwardPx: 165,
+    collisionRadiusPx: 140,
+    collisionHalfHeightPx: 135,
   },
 ];
 
@@ -126,26 +143,28 @@ export const stationMap = Object.fromEntries(
 ) as Record<SectionId, WorldStationConfig>;
 
 export const HORIZON_PANELS = 24;
-export const HORIZON_RADIUS_PX = 1850;
+export const HORIZON_RADIUS_PX = 2050;
 export const FLOOR_ELEVATION_Y = 180;
-export const CEILING_ELEVATION_Y = -540;
+export const CEILING_ELEVATION_Y = -580;
 
 /**
- * Elevated top-down initial perspective positioned above the exhibition arena
- * and angled downward so the floor grid, central hub, and stations are visible.
+ * Elevated downward-looking initial free-roaming camera coordinates.
+ * Position is independent in world space (not constrained to world center).
  */
 export const DEFAULT_CAMERA = {
+  x: 0,
+  y: -380,
+  z: 420,
   yaw: 0,
   pitch: -27,
-  zoom: -380,
-  x: 0,
-  y: -320,
-  z: 0,
 } as const;
 
-export const CAMERA_LIMITS = {
-  minPitch: -42,
-  maxPitch: 14,
-  minZoom: -560,
-  maxZoom: 240,
+export const CAMERA_BOUNDS = {
+  minPitch: -52,
+  maxPitch: 36,
+  minY: -500,
+  maxY: 95,
+  maxArenaRadius: 1560,
+  baseMoveSpeed: 540,
+  sprintMultiplier: 2.1,
 } as const;

@@ -29,7 +29,9 @@ export type AimRequest = {
 export type CameraTelemetry = {
   yawDeg: number;
   pitchDeg: number;
-  zoomPx: number;
+  posX: number;
+  posY: number;
+  posZ: number;
 };
 
 export type TelemetryListener = (telemetry: CameraTelemetry) => void;
