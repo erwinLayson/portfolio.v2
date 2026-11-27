@@ -2,12 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useEnvironmentNav, type SectionId } from "../state/environmentNav";
 import { computeRadiusScale } from "./cameraMath";
-import {
-  HORIZON_PANELS,
-  HORIZON_RADIUS_PX,
-  worldStations,
-} from "./worldConfig";
+import { useDeviceProfile } from "./deviceProfile";
+import { HORIZON_RADIUS_PX, worldStations } from "./worldConfig";
 import { useFreeCameraController } from "./FreeCameraController";
+import SceneSvgDefs from "./SceneSvgDefs";
 import CentralPresentation from "./CentralPresentation";
 import WorldObject from "./WorldObject";
 import StationProjection from "./StationProjection";
@@ -15,9 +13,7 @@ import EnvironmentHUD from "./EnvironmentHUD";
 import "../style/Environment3D.css";
 import "../style/Environment.css";
 
-const horizonIndices = Array.from({ length: HORIZON_PANELS }, (_, i) => i);
-
-const cylinderParticles = Array.from({ length: 48 }, (_, i) => {
+const allCylinderParticles = Array.from({ length: 32 }, (_, i) => {
   const azimuthDeg = (i * 137.508) % 360;
   const radius = 1460 + ((i * 89) % 300);
   const y = -520 + ((i * 53) % 440);
@@ -28,6 +24,7 @@ const cylinderParticles = Array.from({ length: 48 }, (_, i) => {
 
 export default function Environment3D() {
   const { activeSection, isTransitioning, closeSection } = useEnvironmentNav();
+  const deviceProfile = useDeviceProfile();
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const ceilingStageRef = useRef<HTMLDivElement>(null);
@@ -57,6 +54,30 @@ export default function Environment3D() {
     [],
   );
 
+  const cylinderParticles = useMemo(
+    () => allCylinderParticles.slice(0, deviceProfile.starCount),
+    [deviceProfile.starCount],
+  );
+
+  const panelCount = deviceProfile.horizonPanels;
+  const panelWidthPx =
+    Math.ceil(2 * HORIZON_RADIUS_PX * Math.tan(Math.PI / panelCount)) + 16;
+
+  const horizonNodes = useMemo(
+    () =>
+      Array.from({ length: panelCount }, (_, idx) => {
+        const az = (idx * 360) / panelCount;
+        const hasMonolith = idx % 3 === 0;
+        return { idx, az, hasMonolith };
+      }),
+    [panelCount],
+  );
+
+  const horizonAngles = useMemo(
+    () => horizonNodes.map((node) => node.az),
+    [horizonNodes],
+  );
+
   const {
     isDraggingUI,
     shouldSuppressClick,
@@ -70,22 +91,25 @@ export default function Environment3D() {
     stationAnchorRef,
     objectElsRef,
     horizonElsRef,
+    horizonAngles,
     particleElsRef,
     particleCoords: cylinderParticles,
     radiusScale,
   });
 
-  const panelWidthPx =
-    Math.ceil(2 * HORIZON_RADIUS_PX * Math.tan(Math.PI / HORIZON_PANELS)) + 16;
-
-  const horizonNodes = useMemo(
+  const floorSpokes = useMemo(
     () =>
-      horizonIndices.map((idx) => {
-        const az = (idx * 360) / HORIZON_PANELS;
-        const hasMonolith = idx % 3 === 0;
-        return { idx, az, hasMonolith };
+      worldStations.map((station) => {
+        const r = Math.round(station.radiusPx * radiusScale);
+        const rad = (station.azimuthDeg * Math.PI) / 180;
+        return {
+          section: station.section,
+          bright: Boolean(station.traceHighlight),
+          x: Math.round(r * Math.sin(rad)),
+          y: Math.round(-r * Math.cos(rad)),
+        };
       }),
-    [],
+    [radiusScale],
   );
 
   return (
@@ -93,12 +117,15 @@ export default function Environment3D() {
       className={`env-viewport ${isDraggingUI ? "is-dragging" : ""} ${
         activeSection ? "is-station-open" : ""
       } ${isTransitioning ? "is-transitioning" : ""}`}
+      data-perf-tier={deviceProfile.tier}
       ref={viewportRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endPointer}
       onPointerCancel={endPointer}
     >
+      <SceneSvgDefs />
+
       {/* Click outside station panel backdrop to restore previous exploration pose */}
       {activeSection && (
         <div
@@ -114,36 +141,72 @@ export default function Environment3D() {
           {/* World-locked 3D Digital Exhibition Floor */}
           <div className="env-floor-stage" aria-hidden="true">
             <div className="env-floor-world">
-              <div className="env-floor-grid" />
-              <div className="env-floor-hub">
-                <span className="env-floor-hub__ring env-floor-hub__ring--outer" />
-                <span className="env-floor-hub__ring env-floor-hub__ring--mid" />
-                <span className="env-floor-hub__ring env-floor-hub__ring--inner" />
-                <span className="env-floor-hub__core" />
-              </div>
-              {worldStations.map((station) => {
-                const r = Math.round(station.radiusPx * radiusScale);
-                return (
-                  <div
-                    key={`trace-${station.section}`}
-                    className={`env-floor-spoke ${
-                      station.traceHighlight ? "is-bright" : ""
-                    }`}
-                    style={{
-                      transform: `rotate(${station.azimuthDeg}deg)`,
-                    }}
-                  >
-                    <span
-                      className="env-floor-spoke__line"
-                      style={{ height: `${r}px` }}
+              <svg
+                className="env-floor-svg"
+                viewBox="-1600 -1600 3200 3200"
+                width="1600"
+                height="1600"
+              >
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="1598"
+                  fill="url(#env-floor-vignette)"
+                  stroke="#18b9e8"
+                  strokeOpacity="0.42"
+                  strokeWidth="3"
+                />
+                <circle cx="0" cy="0" r="1596" fill="url(#env-floor-grid-pat)" />
+                <circle cx="0" cy="0" r="46" fill="url(#env-floor-core-grad)" />
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="90"
+                  fill="none"
+                  stroke="#18b9e8"
+                  strokeOpacity="0.58"
+                  strokeWidth="1.2"
+                />
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="190"
+                  fill="none"
+                  stroke="#1683f7"
+                  strokeOpacity="0.44"
+                  strokeWidth="1.2"
+                />
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="320"
+                  fill="none"
+                  stroke="#18b9e8"
+                  strokeOpacity="0.26"
+                  strokeDasharray="10 8"
+                  strokeWidth="1.2"
+                />
+                {floorSpokes.map((spoke) => (
+                  <g key={`trace-${spoke.section}`}>
+                    <line
+                      x1="0"
+                      y1="0"
+                      x2={spoke.x}
+                      y2={spoke.y}
+                      stroke="#18b9e8"
+                      strokeOpacity={spoke.bright ? 0.62 : 0.32}
+                      strokeWidth={spoke.bright ? 2.5 : 1.8}
                     />
-                    <span
-                      className="env-floor-spoke__pad"
-                      style={{ bottom: `${r}px` }}
+                    <use
+                      href="#env-sym-floor-pad"
+                      x={spoke.x - 40}
+                      y={spoke.y - 40}
+                      width="80"
+                      height="80"
                     />
-                  </div>
-                );
-              })}
+                  </g>
+                ))}
+              </svg>
             </div>
           </div>
 
@@ -176,15 +239,7 @@ export default function Environment3D() {
                       transform: `rotateY(${-az}deg) translateZ(${-HORIZON_RADIUS_PX}px)`,
                     } as CSSProperties
                   }
-                >
-                  <span className="env-horizon-panel__band" />
-                  {hasMonolith && (
-                    <>
-                      <span className="env-horizon-panel__pillar" />
-                      <span className="env-horizon-panel__beacon" />
-                    </>
-                  )}
-                </div>
+                />
               ))}
             </div>
 
@@ -210,7 +265,10 @@ export default function Environment3D() {
             </div>
 
             {/* Central Cinematic AI Presentation in 3D World Coordinates */}
-            <CentralPresentation presenterRef={presenterRef} />
+            <CentralPresentation
+              presenterRef={presenterRef}
+              particleCount={deviceProfile.presenterParticleCount}
+            />
 
             {/* 8 Interactive Portfolio Stations Distributed Around the Arena */}
             <div className="env-objects">

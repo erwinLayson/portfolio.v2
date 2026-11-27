@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import type { RefObject } from "react";
 import me480Avif from "../assets/portrait/me-480.avif";
 import me680Avif from "../assets/portrait/me-680.avif";
@@ -8,7 +9,7 @@ import me960Webp from "../assets/portrait/me-960.webp";
 import me680Png from "../assets/portrait/me-680.png";
 import { profile } from "../constants/profile";
 
-const presenterParticles = Array.from({ length: 16 }, (_, i) => {
+const allPresenterParticles = Array.from({ length: 12 }, (_, i) => {
   const x = ((i * 83) % 440) - 220;
   const y = ((i * 67) % 420) - 260;
   const z = ((i * 47) % 140) - 70;
@@ -17,11 +18,18 @@ const presenterParticles = Array.from({ length: 16 }, (_, i) => {
   return { id: i, x, y, z, size, delay };
 });
 
-export default function CentralPresentation({
+function CentralPresentationInner({
   presenterRef,
+  particleCount = 12,
 }: {
   presenterRef: RefObject<HTMLDivElement | null>;
+  particleCount?: number;
 }) {
+  const particles = useMemo(
+    () => allPresenterParticles.slice(0, particleCount),
+    [particleCount],
+  );
+
   return (
     <div ref={presenterRef} className="ai-presenter">
       {/* Soft volumetric light cone descending to the conference room floor */}
@@ -36,7 +44,7 @@ export default function CentralPresentation({
 
       {/* Subtle volumetric light motes in 3D depth layers */}
       <div className="ai-presenter__particles" aria-hidden="true">
-        {presenterParticles.map((p) => (
+        {particles.map((p) => (
           <span
             key={p.id}
             className="ai-presenter__particle"
@@ -85,3 +93,6 @@ export default function CentralPresentation({
     </div>
   );
 }
+
+const CentralPresentation = memo(CentralPresentationInner);
+export default CentralPresentation;

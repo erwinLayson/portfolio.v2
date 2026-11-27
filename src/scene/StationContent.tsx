@@ -413,6 +413,8 @@ function ProjectsStation() {
                   src={thumb}
                   alt=""
                   className="station-project-node__thumb"
+                  loading="lazy"
+                  decoding="async"
                   aria-hidden="true"
                 />
               )}
@@ -429,6 +431,7 @@ function ProjectsStation() {
               src={activeImage}
               alt={`${activeProject.title} application preview`}
               className="station-project-stage__img"
+              decoding="async"
             />
           ) : (
             <div className="station-project-stage__empty">
@@ -713,7 +716,7 @@ function BackstageStation() {
 
       <div className="station-gallery-stage">
         <figure className="station-gallery-featured">
-          <img src={featured.image} alt={featured.title} />
+          <img src={featured.image} alt={featured.title} decoding="async" />
           <figcaption>
             <strong>{featured.title}</strong>
             <span>{featured.description}</span>
@@ -731,7 +734,7 @@ function BackstageStation() {
               aria-pressed={selectedPhotoIdx === idx}
               onClick={() => setSelectedPhotoIdx(idx)}
             >
-              <img src={item.image} alt="" aria-hidden="true" />
+              <img src={item.image} alt="" loading="lazy" decoding="async" aria-hidden="true" />
               <span>{item.title}</span>
             </button>
           ))}

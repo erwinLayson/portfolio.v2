@@ -1,9 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { useEnvironmentNav } from "../state/environmentNav";
 import { normalizeCompassDeg } from "./cameraMath";
 import { worldStations } from "./worldConfig";
 
-function CompassReadout({ showBadge }: { showBadge: boolean }) {
+const CompassReadout = memo(function CompassReadout({
+  showBadge,
+}: {
+  showBadge: boolean;
+}) {
   const { subscribeTelemetry } = useEnvironmentNav();
   const degRef = useRef<HTMLSpanElement>(null);
   const posRef = useRef<HTMLSpanElement>(null);
@@ -35,9 +39,9 @@ function CompassReadout({ showBadge }: { showBadge: boolean }) {
   }
 
   return <span ref={degRef} className="env-radar-menu__az">000°</span>;
-}
+});
 
-export default function EnvironmentHUD() {
+function EnvironmentHUDInner() {
   const {
     activeSection,
     hasInteracted,
@@ -171,3 +175,6 @@ export default function EnvironmentHUD() {
     </div>
   );
 }
+
+const EnvironmentHUD = memo(EnvironmentHUDInner);
+export default EnvironmentHUD;

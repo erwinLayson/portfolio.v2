@@ -21,7 +21,6 @@ import {
   CENTRAL_PRESENTATION,
   DEFAULT_CAMERA,
   FLOOR_ELEVATION_Y,
-  HORIZON_PANELS,
   HORIZON_RADIUS_PX,
   stationMap,
   worldStations,
@@ -98,6 +97,7 @@ type FreeCameraControllerArgs = {
   stationAnchorRef: RefObject<HTMLDivElement | null>;
   objectElsRef: RefObject<Partial<Record<SectionId, HTMLButtonElement | null>>>;
   horizonElsRef: RefObject<(HTMLDivElement | null)[]>;
+  horizonAngles: number[];
   particleElsRef: RefObject<(HTMLSpanElement | null)[]>;
   particleCoords: { azimuthDeg: number; radius: number; y: number }[];
   radiusScale: number;
@@ -110,6 +110,7 @@ export function useFreeCameraController({
   stationAnchorRef,
   objectElsRef,
   horizonElsRef,
+  horizonAngles,
   particleElsRef,
   particleCoords,
   radiusScale,
@@ -676,7 +677,7 @@ export function useFreeCameraController({
       const zStr = `${cz.toFixed(2)}px`;
       const floorStr = `${floorNearZ.toFixed(2)}px`;
       const ceilStr = `${ceilNearZ.toFixed(2)}px`;
-      const cssKey = `${yawStr}|${pitchStr}|${xStr}|${yStr}|${zStr}|${floorStr}|${ceilStr}|${curScale}|${String(activeSectionRef.current)}|${isClosingRef.current}`;
+      const cssKey = `${yawStr}|${pitchStr}|${xStr}|${yStr}|${zStr}|${floorStr}|${ceilStr}|${curScale}|${horizonAngles.length}|${particleCoords.length}|${String(activeSectionRef.current)}|${isClosingRef.current}`;
 
       const cssChanged = cssKey !== lastCameraCssKey;
       if (cssChanged) {
@@ -759,10 +760,10 @@ export function useFreeCameraController({
         }
 
         const horizonEls = horizonElsRef.current;
-        for (let i = 0; i < HORIZON_PANELS; i += 1) {
+        for (let i = 0; i < horizonAngles.length; i += 1) {
           const el = horizonEls[i];
           if (!el) continue;
-          const az = (i * 360) / HORIZON_PANELS;
+          const az = horizonAngles[i];
           const pos = polarToWorld(az, HORIZON_RADIUS_PX, 0);
           const zEye = worldToEyeZ(
             pos.x,
@@ -903,6 +904,7 @@ export function useFreeCameraController({
     };
   }, [
     ceilingStageRef,
+    horizonAngles,
     horizonElsRef,
     objectElsRef,
     particleCoords,

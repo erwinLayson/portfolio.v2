@@ -7,7 +7,7 @@ export type Project = {
   demo?: string;
 };
 
-const images = import.meta.glob("/src/assets/projects/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}", {
+const images = import.meta.glob("/src/assets/projects/*.webp", {
   eager: true,
   import: "default",
 }) as Record<string, string>;
@@ -34,7 +34,7 @@ export const projects: Project[] = [
     description:
       "A school management platform with role-based portals for admins, teachers, and students — handling enrollments, attendance, an online gradebook, and analytics dashboards behind protected routes.",
     tech: ["React", "TypeScript", "Tailwind CSS", "Node.js", "MySQL"],
-    image: "abang.png",
+    image: "abang.webp",
     github: "https://github.com/erwinLayson/gradeSync-client-side.git",
     demo: "https://grade-sync-client-side.vercel.app/",
   },
@@ -42,7 +42,7 @@ export const projects: Project[] = [
     title: "OSAS - Scholarship Application and Management System",
     description:
       "A scholarship system for a state university — students register and track applications online, while admins manage scholarship programs, review submissions, and generate reports from a dedicated dashboard.",
-    image: "osas.png",
+    image: "osas.webp",
     tech: ["React", "Tailwind CSS", "JavaScript", "Node.js", "Express", "MySQL"],
     github: "https://github.com/erwinLayson/Scholarship-Application-and-Management-System.git",
     demo: "https://osas-frontend.vercel.app/home",
@@ -51,7 +51,7 @@ export const projects: Project[] = [
     title: "P2P Bus Tracking System",
     description:
       "A real-time bus tracking system for point-to-point routes: passengers follow buses on a live map, drivers broadcast their location and manage routes, and admins oversee drivers and the fleet.",
-    image: 'p2p.png',
+    image: "p2p.webp",
     tech: ["React", "Tailwind CSS", "Socket.IO", "JavaScript", "Node.js", "Leaflet", "Express", "MongoDB"],
     demo: "",
     github: "https://github.com/erwinLayson/P2P-bus-tracking-system-client-side.git",
@@ -60,7 +60,7 @@ export const projects: Project[] = [
     title: "Salonease ",
     description:
       "An Online Appointment Booking and Management System for Raheem Make Up Studio and Salon",
-    image: 'salonease.png',
+    image: "salonease.webp",
     tech: ["React", "Tailwind CSS",  "TypeScript", "Node.js", "Express", "MySql"],
     demo: "https://salonease-seven.vercel.app/",
     github: "https://github.com/erwinLayson/salonease",
