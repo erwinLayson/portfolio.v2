@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useEnvironmentNav, type SectionId } from "../state/environmentNav";
-import { computeRadiusScale } from "./cameraMath";
+import { computeHorizonRadius, computeRadiusScale } from "./cameraMath";
 import { useDeviceProfile } from "./deviceProfile";
-import { HORIZON_RADIUS_PX, worldStations } from "./worldConfig";
+import { worldStations } from "./worldConfig";
 import { useFreeCameraController } from "./FreeCameraController";
 import SceneSvgDefs from "./SceneSvgDefs";
 import CentralPresentation from "./CentralPresentation";
@@ -40,6 +40,7 @@ export default function Environment3D() {
     typeof window !== "undefined" ? window.innerWidth : 1280,
   );
   const radiusScale = computeRadiusScale(viewportWidth);
+  const horizonRadiusPx = computeHorizonRadius(radiusScale);
 
   useEffect(() => {
     const onResize = () => setViewportWidth(window.innerWidth);
@@ -61,7 +62,7 @@ export default function Environment3D() {
 
   const panelCount = deviceProfile.horizonPanels;
   const panelWidthPx =
-    Math.ceil(2 * HORIZON_RADIUS_PX * Math.tan(Math.PI / panelCount)) + 16;
+    Math.ceil(2 * horizonRadiusPx * Math.tan(Math.PI / panelCount)) + 16;
 
   const horizonNodes = useMemo(
     () =>
@@ -92,6 +93,7 @@ export default function Environment3D() {
     objectElsRef,
     horizonElsRef,
     horizonAngles,
+    horizonRadiusPx,
     particleElsRef,
     particleCoords: cylinderParticles,
     radiusScale,
@@ -100,16 +102,15 @@ export default function Environment3D() {
   const floorSpokes = useMemo(
     () =>
       worldStations.map((station) => {
-        const r = Math.round(station.radiusPx * radiusScale);
         const rad = (station.azimuthDeg * Math.PI) / 180;
         return {
           section: station.section,
           bright: Boolean(station.traceHighlight),
-          x: Math.round(r * Math.sin(rad)),
-          y: Math.round(-r * Math.cos(rad)),
+          x: Math.round(station.radiusPx * Math.sin(rad)),
+          y: Math.round(-station.radiusPx * Math.cos(rad)),
         };
       }),
-    [radiusScale],
+    [],
   );
 
   return (
@@ -118,6 +119,7 @@ export default function Environment3D() {
         activeSection ? "is-station-open" : ""
       } ${isTransitioning ? "is-transitioning" : ""}`}
       data-perf-tier={deviceProfile.tier}
+      style={{ "--arena-scale": radiusScale } as CSSProperties}
       ref={viewportRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -236,7 +238,7 @@ export default function Environment3D() {
                     {
                       width: `${panelWidthPx}px`,
                       marginLeft: `${-panelWidthPx / 2}px`,
-                      transform: `rotateY(${-az}deg) translateZ(${-HORIZON_RADIUS_PX}px)`,
+                      transform: `rotateY(${-az}deg) translateZ(${-horizonRadiusPx}px)`,
                     } as CSSProperties
                   }
                 />

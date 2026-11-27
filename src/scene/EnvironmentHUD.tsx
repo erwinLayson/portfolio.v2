@@ -88,7 +88,12 @@ function EnvironmentHUDInner() {
       {!hasInteracted && !activeSection && (
         <div className="env-intro-hint" role="status" aria-live="polite">
           <span className="env-intro-hint__dot" aria-hidden="true" />
-          <span>DRAG TO LOOK · WASD / QE TO MOVE · SCROLL TO FLY · CLICK STATIONS</span>
+          <span className="env-intro-hint__desktop">
+            DRAG TO LOOK · WASD / QE TO MOVE · SCROLL TO FLY · CLICK STATIONS
+          </span>
+          <span className="env-intro-hint__mobile">
+            DRAG TO LOOK · PINCH TO FLY · TAP STATIONS
+          </span>
         </div>
       )}
 

@@ -21,7 +21,6 @@ import {
   CEILING_ELEVATION_Y,
   CENTRAL_PRESENTATION,
   FLOOR_ELEVATION_Y,
-  HORIZON_RADIUS_PX,
   stationMap,
   worldStations,
 } from "./worldConfig";
@@ -98,6 +97,7 @@ type FreeCameraControllerArgs = {
   objectElsRef: RefObject<Partial<Record<SectionId, HTMLButtonElement | null>>>;
   horizonElsRef: RefObject<(HTMLDivElement | null)[]>;
   horizonAngles: number[];
+  horizonRadiusPx: number;
   particleElsRef: RefObject<(HTMLSpanElement | null)[]>;
   particleCoords: { azimuthDeg: number; radius: number; y: number }[];
   radiusScale: number;
@@ -111,6 +111,7 @@ export function useFreeCameraController({
   objectElsRef,
   horizonElsRef,
   horizonAngles,
+  horizonRadiusPx,
   particleElsRef,
   particleCoords,
   radiusScale,
@@ -766,7 +767,7 @@ export function useFreeCameraController({
           const el = horizonEls[i];
           if (!el) continue;
           const az = horizonAngles[i];
-          const pos = polarToWorld(az, HORIZON_RADIUS_PX, 0);
+          const pos = polarToWorld(az, horizonRadiusPx, 0);
           const zEye = worldToEyeZ(
             pos.x,
             pos.y,
@@ -908,6 +909,7 @@ export function useFreeCameraController({
     ceilingStageRef,
     horizonAngles,
     horizonElsRef,
+    horizonRadiusPx,
     objectElsRef,
     particleCoords,
     particleElsRef,

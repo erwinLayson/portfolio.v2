@@ -193,25 +193,29 @@ export function resolveFreeCameraCollision(
 }
 
 export function computeResponsivePerspective(viewportWidth: number): number {
-  if (viewportWidth < 420) return 320;
-  if (viewportWidth < 560) return 380;
+  if (viewportWidth < 420) return 400;
+  if (viewportWidth < 560) return 440;
   if (viewportWidth < 768) return 500;
   if (viewportWidth < 960) return 640;
   return 780;
 }
 
 export function computeRadiusScale(viewportWidth: number): number {
-  if (viewportWidth < 420) return 0.52;
+  if (viewportWidth < 420) return 0.58;
   if (viewportWidth < 560) return 0.62;
-  if (viewportWidth < 768) return 0.74;
-  if (viewportWidth < 900) return 0.88;
+  if (viewportWidth < 768) return 0.72;
+  if (viewportWidth < 960) return 0.84;
   return 1;
+}
+
+export function computeHorizonRadius(radiusScale: number): number {
+  return Math.round(1850 * (0.65 + 0.35 * radiusScale));
 }
 
 /**
  * Computes the initial default camera pose for the given viewport width.
- * On narrower screens, the camera is raised higher and pulled further back
- * so the whole arena remains visible despite the reduced field of view.
+ * Mobile portrait viewports use calibrated elevation and distance so the
+ * central AI presenter and all 8 stations fill the frame without side clipping.
  */
 export function computeDefaultCamera(viewportWidth: number): {
   x: number;
@@ -221,14 +225,17 @@ export function computeDefaultCamera(viewportWidth: number): {
   pitch: number;
 } {
   if (viewportWidth < 420) {
-    return { x: 0, y: -1080, z: 1240, yaw: 0, pitch: -48 };
+    return { x: 0, y: -980, z: 1420, yaw: 0, pitch: -36 };
   }
   if (viewportWidth < 560) {
-    return { x: 0, y: -1200, z: 1440, yaw: 0, pitch: -46 };
+    return { x: 0, y: -1080, z: 1500, yaw: 0, pitch: -38 };
   }
   if (viewportWidth < 768) {
-    return { x: 0, y: -1360, z: 1680, yaw: 0, pitch: -42 };
+    return { x: 0, y: -1240, z: 1620, yaw: 0, pitch: -40 };
   }
-  // Desktop / large tablet — original defaults
+  if (viewportWidth < 960) {
+    return { x: 0, y: -1440, z: 1840, yaw: 0, pitch: -40 };
+  }
+  // Desktop — original defaults preserved
   return { x: 0, y: -1520, z: 1960, yaw: 0, pitch: -38 };
 }
