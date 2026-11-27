@@ -27,7 +27,13 @@ export default function Environment3D() {
   const deviceProfile = useDeviceProfile();
 
   const viewportRef = useRef<HTMLDivElement>(null);
+  const perspectiveRef = useRef<HTMLDivElement>(null);
+  const cameraRigRef = useRef<HTMLDivElement>(null);
+  const floorStageRef = useRef<HTMLDivElement>(null);
+  const floorWorldRef = useRef<HTMLDivElement>(null);
   const ceilingStageRef = useRef<HTMLDivElement>(null);
+  const ceilingWorldRef = useRef<HTMLDivElement>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
   const presenterRef = useRef<HTMLDivElement>(null);
   const stationAnchorRef = useRef<HTMLDivElement>(null);
   const objectElsRef = useRef<Partial<Record<SectionId, HTMLButtonElement | null>>>(
@@ -80,14 +86,19 @@ export default function Environment3D() {
   );
 
   const {
-    isDraggingUI,
     shouldSuppressClick,
     handlePointerDown,
     handlePointerMove,
     endPointer,
   } = useFreeCameraController({
     viewportRef,
+    perspectiveRef,
+    cameraRigRef,
+    floorStageRef,
+    floorWorldRef,
     ceilingStageRef,
+    ceilingWorldRef,
+    worldRef,
     presenterRef,
     stationAnchorRef,
     objectElsRef,
@@ -115,7 +126,7 @@ export default function Environment3D() {
 
   return (
     <main
-      className={`env-viewport ${isDraggingUI ? "is-dragging" : ""} ${
+      className={`env-viewport ${
         activeSection ? "is-station-open" : ""
       } ${isTransitioning ? "is-transitioning" : ""}`}
       data-perf-tier={deviceProfile.tier}
@@ -138,11 +149,11 @@ export default function Environment3D() {
       )}
 
       {/* Fixed-perspective stage; camera eye sits cleanly at (camX, camY, camZ) */}
-      <div className="env-camera-perspective">
-        <div className="env-camera-rig">
+      <div className="env-camera-perspective" ref={perspectiveRef}>
+        <div className="env-camera-rig" ref={cameraRigRef}>
           {/* World-locked 3D Digital Exhibition Floor */}
-          <div className="env-floor-stage" aria-hidden="true">
-            <div className="env-floor-world">
+          <div className="env-floor-stage" ref={floorStageRef} aria-hidden="true">
+            <div className="env-floor-world" ref={floorWorldRef}>
               <svg
                 className="env-floor-svg"
                 viewBox="-1600 -1600 3200 3200"
@@ -214,7 +225,7 @@ export default function Environment3D() {
 
           {/* Overhead Holographic Canopy */}
           <div className="env-ceiling-stage" ref={ceilingStageRef} aria-hidden="true">
-            <div className="env-ceiling-world">
+            <div className="env-ceiling-world" ref={ceilingWorldRef}>
               <div className="env-ceiling-grid" />
               <div className="env-ceiling-ring env-ceiling-ring--inner" />
               <div className="env-ceiling-ring env-ceiling-ring--outer" />
@@ -222,7 +233,7 @@ export default function Environment3D() {
           </div>
 
           {/* Independent Yaw + World Translation Stage */}
-          <div className="env-world">
+          <div className="env-world" ref={worldRef}>
             {/* 360-Degree Architectural Horizon Cylinder */}
             <div className="env-horizon-ring" aria-hidden="true">
               {horizonNodes.map(({ idx, az, hasMonolith }) => (

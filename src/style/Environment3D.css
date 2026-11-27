@@ -64,6 +64,7 @@
   width: 0;
   height: 0;
   transform-style: preserve-3d;
+  will-change: transform;
   pointer-events: none;
   transform:
     translate3d(0px, 0px, var(--cam-persp))
@@ -81,6 +82,8 @@
   width: 3600px;
   height: 3600px;
   overflow: hidden;
+  contain: layout style;
+  will-change: transform;
   pointer-events: none;
   transform-origin: 50% 100%;
   transform:
@@ -94,6 +97,7 @@
   top: 3600px;
   width: 0;
   height: 0;
+  will-change: transform;
   transform-origin: 0 0;
   transform:
     translate3d(0px, var(--floor-near-z), 0px)
@@ -115,6 +119,7 @@
   top: -800px;
   width: 1600px;
   height: 1600px;
+  will-change: transform;
   transform: scale(calc(2 * var(--arena-scale, 1)));
   transform-origin: center center;
   pointer-events: none;
@@ -201,6 +206,7 @@
   width: 0;
   height: 0;
   transform-style: preserve-3d;
+  will-change: transform;
   pointer-events: none;
   transform:
     rotateY(var(--cam-yaw))
@@ -220,6 +226,7 @@
   width: 0;
   height: 0;
   transform-style: preserve-3d;
+  contain: style;
 }
 
 .env-horizon-panel {
@@ -826,6 +833,7 @@
   position: fixed;
   inset: 0;
   z-index: 20;
+  contain: layout style;
   pointer-events: none;
 }
 

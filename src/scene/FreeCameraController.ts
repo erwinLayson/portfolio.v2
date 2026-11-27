@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import { useEnvironmentNav, type SectionId } from "../state/environmentNav";
 import {
@@ -91,7 +91,13 @@ type FreeCameraState = {
 
 type FreeCameraControllerArgs = {
   viewportRef: RefObject<HTMLDivElement | null>;
+  perspectiveRef: RefObject<HTMLDivElement | null>;
+  cameraRigRef: RefObject<HTMLDivElement | null>;
+  floorStageRef: RefObject<HTMLDivElement | null>;
+  floorWorldRef: RefObject<HTMLDivElement | null>;
   ceilingStageRef: RefObject<HTMLDivElement | null>;
+  ceilingWorldRef: RefObject<HTMLDivElement | null>;
+  worldRef: RefObject<HTMLDivElement | null>;
   presenterRef: RefObject<HTMLDivElement | null>;
   stationAnchorRef: RefObject<HTMLDivElement | null>;
   objectElsRef: RefObject<Partial<Record<SectionId, HTMLButtonElement | null>>>;
@@ -105,7 +111,13 @@ type FreeCameraControllerArgs = {
 
 export function useFreeCameraController({
   viewportRef,
+  perspectiveRef,
+  cameraRigRef,
+  floorStageRef,
+  floorWorldRef,
   ceilingStageRef,
+  ceilingWorldRef,
+  worldRef,
   presenterRef,
   stationAnchorRef,
   objectElsRef,
@@ -168,7 +180,6 @@ export function useFreeCameraController({
     pinchLastDist: null as number | null,
   });
   const suppressClickRef = useRef(false);
-  const [isDraggingUI, setIsDraggingUI] = useState(false);
 
   const activeSectionRef = useRef<SectionId | null>(activeSection);
   const isClosingRef = useRef(isClosing);
@@ -213,12 +224,15 @@ export function useFreeCameraController({
     const updateFixedPerspective = () => {
       const nextPersp = computeResponsivePerspective(window.innerWidth);
       fixedPerspectiveRef.current = nextPersp;
-      viewportRef.current?.style.setProperty("--cam-persp", `${nextPersp}px`);
+      if (perspectiveRef.current) {
+        perspectiveRef.current.style.perspective = `${nextPersp}px`;
+      }
+      wakeSimulationRef.current();
     };
     updateFixedPerspective();
     window.addEventListener("resize", updateFixedPerspective, { passive: true });
     return () => window.removeEventListener("resize", updateFixedPerspective);
-  }, [viewportRef]);
+  }, [perspectiveRef]);
 
   // Coordinated station selection, switch, exit & reset transition engine
   useEffect(() => {
@@ -686,41 +700,50 @@ export function useFreeCameraController({
       if (cssChanged) {
         lastCameraCssKey = cssKey;
 
-        const viewport = viewportRef.current;
-        if (viewport) {
-          viewport.style.setProperty("--cam-yaw", yawStr);
-          viewport.style.setProperty("--cam-pitch", pitchStr);
-          viewport.style.setProperty("--cam-x", xStr);
-          viewport.style.setProperty("--cam-y", yStr);
-          viewport.style.setProperty("--cam-z", zStr);
-          viewport.style.setProperty("--floor-near-z", floorStr);
-          viewport.style.setProperty("--ceil-near-z", ceilStr);
+        const rigEl = cameraRigRef.current;
+        if (rigEl) {
+          rigEl.style.transform = `translate3d(0px, 0px, ${fixedPerspectiveRef.current}px) rotateX(${pitchStr})`;
+        }
 
-          const presenterZEye = worldToEyeZ(
-            0,
-            CENTRAL_PRESENTATION.y,
-            0,
-            cx,
-            cy,
-            cz,
-            yaw,
-            pitch,
-          );
+        const floorStageEl = floorStageRef.current;
+        if (floorStageEl) {
+          floorStageEl.style.transform = `translate3d(0px, ${(FLOOR_ELEVATION_Y - cy).toFixed(2)}px, ${(-floorNearZ).toFixed(2)}px) rotateX(90deg)`;
+        }
 
+        const floorWorldEl = floorWorldRef.current;
+        if (floorWorldEl) {
+          floorWorldEl.style.transform = `translate3d(0px, ${floorStr}, 0px) rotateZ(${(-yaw).toFixed(3)}deg) translate3d(${(-cx).toFixed(2)}px, ${(-cz).toFixed(2)}px, 0px)`;
+        }
+
+        const worldEl = worldRef.current;
+        if (worldEl) {
+          worldEl.style.transform = `rotateY(${yawStr}) translate3d(${(-cx).toFixed(2)}px, ${(-cy).toFixed(2)}px, ${(-cz).toFixed(2)}px)`;
+        }
+
+        const presenterZEye = worldToEyeZ(
+          0,
+          CENTRAL_PRESENTATION.y,
+          0,
+          cx,
+          cy,
+          cz,
+          yaw,
+          pitch,
+        );
+
+        const presenterEl = presenterRef.current;
+        if (presenterEl) {
           // Keep central presenter facing camera only while in front of lens so passing near origin never flips it 180deg
           if (presenterZEye < -90 && Math.hypot(cx, cz) > 48) {
             const faceYawDeg = (Math.atan2(cx, cz) * 180) / Math.PI;
-            viewport.style.setProperty("--presenter-yaw", `${faceYawDeg.toFixed(2)}deg`);
+            presenterEl.style.setProperty("--presenter-yaw", `${faceYawDeg.toFixed(2)}deg`);
           }
 
           // Cull central AI presentation strictly when behind the near eye plane
-          const presenterEl = presenterRef.current;
-          if (presenterEl) {
-            const hidePresenter = presenterZEye > -75;
-            if (presenterEl.dataset.hidden !== String(hidePresenter)) {
-              presenterEl.dataset.hidden = String(hidePresenter);
-              presenterEl.style.visibility = hidePresenter ? "hidden" : "visible";
-            }
+          const hidePresenter = presenterZEye > -75;
+          if (presenterEl.dataset.hidden !== String(hidePresenter)) {
+            presenterEl.dataset.hidden = String(hidePresenter);
+            presenterEl.style.visibility = hidePresenter ? "hidden" : "visible";
           }
         }
 
@@ -735,6 +758,10 @@ export function useFreeCameraController({
           }
           if (showCeiling) {
             ceilingEl.style.opacity = ceilingAlpha.toFixed(3);
+            ceilingEl.style.transform = `translate3d(0px, ${(CEILING_ELEVATION_Y - cy).toFixed(2)}px, ${(-ceilNearZ).toFixed(2)}px) rotateX(-90deg)`;
+            if (ceilingWorldRef.current) {
+              ceilingWorldRef.current.style.transform = `translate3d(0px, ${(-ceilNearZ).toFixed(2)}px, 0px) rotateZ(${yawStr}) translate3d(${(-cx).toFixed(2)}px, ${cz.toFixed(2)}px, 0px)`;
+            }
           }
         }
 
@@ -906,7 +933,11 @@ export function useFreeCameraController({
       wakeSimulationRef.current = () => {};
     };
   }, [
+    cameraRigRef,
     ceilingStageRef,
+    ceilingWorldRef,
+    floorStageRef,
+    floorWorldRef,
     horizonAngles,
     horizonElsRef,
     horizonRadiusPx,
@@ -917,7 +948,7 @@ export function useFreeCameraController({
     publishTelemetry,
     setIsTransitioning,
     stationAnchorRef,
-    viewportRef,
+    worldRef,
   ]);
 
   // Pointer drag look + mobile two-finger pinch forward/backward movement
@@ -958,7 +989,6 @@ export function useFreeCameraController({
         );
         session.isDragging = true;
         suppressClickRef.current = true;
-        setIsDraggingUI(true);
         markInteracted();
         wakeSimulationRef.current();
       }
@@ -1018,7 +1048,9 @@ export function useFreeCameraController({
         interruptTweenToExplore();
         session.isDragging = true;
         suppressClickRef.current = true;
-        setIsDraggingUI(true);
+        if (event.pointerType === "mouse") {
+          viewportRef.current?.classList.add("is-dragging");
+        }
         markInteracted();
       }
 
@@ -1050,7 +1082,7 @@ export function useFreeCameraController({
       session.lastTime = now;
       wakeSimulationRef.current();
     },
-    [interruptTweenToExplore, markInteracted],
+    [interruptTweenToExplore, markInteracted, viewportRef],
   );
 
   const endPointer = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
@@ -1063,15 +1095,14 @@ export function useFreeCameraController({
 
     if (pointersRef.current.size === 0 && session.isDragging) {
       session.isDragging = false;
-      setIsDraggingUI(false);
+      viewportRef.current?.classList.remove("is-dragging");
       requestAnimationFrame(() => {
         suppressClickRef.current = false;
       });
     }
-  }, []);
+  }, [viewportRef]);
 
   return {
-    isDraggingUI,
     shouldSuppressClick,
     handlePointerDown,
     handlePointerMove,
