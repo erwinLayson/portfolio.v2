@@ -1165,12 +1165,191 @@
     display: none;
   }
 
+  /* Scaled-down presenter for portrait viewports */
+  .ai-presenter {
+    transform: translate3d(0px, -140px, 0px) rotateY(var(--presenter-yaw));
+  }
+
+  .ai-presenter__beam {
+    left: -200px;
+    top: -100px;
+    width: 400px;
+    height: 340px;
+  }
+
+  .ai-presenter__aura {
+    left: -220px;
+    top: -240px;
+    width: 440px;
+    height: 420px;
+  }
+
+  .ai-presenter__base-ring--outer {
+    width: 280px;
+    height: 280px;
+  }
+
+  .ai-presenter__base-ring--inner {
+    width: 170px;
+    height: 170px;
+  }
+
+  .ai-presenter__figure {
+    left: -180px;
+    top: -210px;
+    width: 360px;
+    height: 340px;
+  }
+
+  .ai-presenter__identity {
+    left: -280px;
+    top: 115px;
+    width: 560px;
+  }
+
   .ai-presenter__name {
-    font-size: 76px;
+    font-size: 36px;
+    letter-spacing: 0.16em;
+  }
+
+  .ai-presenter__rule {
+    width: 160px;
   }
 
   .ai-presenter__role {
-    font-size: 34px;
-    letter-spacing: 0.3em;
+    font-size: 14px;
+    letter-spacing: 0.28em;
+  }
+
+  /* Smaller station objects for compact mobile arena */
+  .env-object__tag {
+    min-width: 90px;
+    padding: 4px 8px;
+    transform: translate3d(-50%, 0px, 36px) rotateX(28deg);
+  }
+
+  .env-object__code {
+    font-size: 8px;
+  }
+
+  .env-object__name {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  .env-object__beacon-beam {
+    width: 72px;
+    height: 140px;
+  }
+
+  .env-object__pedestal {
+    width: 100px;
+    height: 100px;
+    margin-left: -50px;
+    margin-bottom: -50px;
+  }
+
+  /* Narrower floor stage container */
+  .env-floor-stage {
+    left: -1200px;
+    width: 2400px;
+  }
+}
+
+/* Extra-small phones (< 420px) */
+@media (max-width: 419px) {
+  .ai-presenter {
+    transform: translate3d(0px, -110px, 0px) rotateY(var(--presenter-yaw));
+  }
+
+  .ai-presenter__beam {
+    left: -160px;
+    top: -80px;
+    width: 320px;
+    height: 280px;
+  }
+
+  .ai-presenter__aura {
+    left: -170px;
+    top: -190px;
+    width: 340px;
+    height: 340px;
+  }
+
+  .ai-presenter__figure {
+    left: -150px;
+    top: -175px;
+    width: 300px;
+    height: 285px;
+  }
+
+  .ai-presenter__identity {
+    left: -220px;
+    top: 95px;
+    width: 440px;
+  }
+
+  .ai-presenter__name {
+    font-size: 28px;
+    letter-spacing: 0.14em;
+  }
+
+  .ai-presenter__rule {
+    width: 120px;
+  }
+
+  .ai-presenter__role {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+  }
+
+  .ai-presenter__base-ring--outer {
+    width: 220px;
+    height: 220px;
+  }
+
+  .ai-presenter__base-ring--inner {
+    width: 130px;
+    height: 130px;
+  }
+
+  .ai-presenter__base-ring {
+    top: 155px;
+  }
+
+  /* Condensed station tags */
+  .env-object__code {
+    display: none;
+  }
+
+  .env-object__cue {
+    display: none;
+  }
+
+  .env-object__tag {
+    min-width: 72px;
+    padding: 3px 6px;
+    border-radius: 5px;
+  }
+
+  .env-object__name {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .env-station-panel {
+    width: 96dvw;
+    max-height: 86dvh;
+  }
+
+  .env-floor-stage {
+    left: -1000px;
+    width: 2000px;
+  }
+
+  .env-intro-hint {
+    font-size: 0.56rem;
+    padding: 0.4rem 0.7rem;
+    gap: 0.4rem;
   }
 }

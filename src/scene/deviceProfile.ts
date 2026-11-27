@@ -21,15 +21,15 @@ const TIER_BUDGETS: Record<
   Omit<DeviceProfile, "tier" | "reducedMotion">
 > = {
   low: {
-    starCount: 12,
-    presenterParticleCount: 6,
-    horizonPanels: 12,
+    starCount: 8,
+    presenterParticleCount: 4,
+    horizonPanels: 10,
     enableAmbientAnimations: false,
   },
   balanced: {
-    starCount: 22,
-    presenterParticleCount: 8,
-    horizonPanels: 16,
+    starCount: 18,
+    presenterParticleCount: 6,
+    horizonPanels: 14,
     enableAmbientAnimations: true,
   },
   high: {

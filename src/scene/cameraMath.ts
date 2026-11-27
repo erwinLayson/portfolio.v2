@@ -193,13 +193,42 @@ export function resolveFreeCameraCollision(
 }
 
 export function computeResponsivePerspective(viewportWidth: number): number {
-  if (viewportWidth < 560) return 440;
+  if (viewportWidth < 420) return 320;
+  if (viewportWidth < 560) return 380;
+  if (viewportWidth < 768) return 500;
   if (viewportWidth < 960) return 640;
   return 780;
 }
 
 export function computeRadiusScale(viewportWidth: number): number {
-  if (viewportWidth < 520) return 0.84;
-  if (viewportWidth < 900) return 0.92;
+  if (viewportWidth < 420) return 0.52;
+  if (viewportWidth < 560) return 0.62;
+  if (viewportWidth < 768) return 0.74;
+  if (viewportWidth < 900) return 0.88;
   return 1;
+}
+
+/**
+ * Computes the initial default camera pose for the given viewport width.
+ * On narrower screens, the camera is raised higher and pulled further back
+ * so the whole arena remains visible despite the reduced field of view.
+ */
+export function computeDefaultCamera(viewportWidth: number): {
+  x: number;
+  y: number;
+  z: number;
+  yaw: number;
+  pitch: number;
+} {
+  if (viewportWidth < 420) {
+    return { x: 0, y: -1080, z: 1240, yaw: 0, pitch: -48 };
+  }
+  if (viewportWidth < 560) {
+    return { x: 0, y: -1200, z: 1440, yaw: 0, pitch: -46 };
+  }
+  if (viewportWidth < 768) {
+    return { x: 0, y: -1360, z: 1680, yaw: 0, pitch: -42 };
+  }
+  // Desktop / large tablet — original defaults
+  return { x: 0, y: -1520, z: 1960, yaw: 0, pitch: -38 };
 }

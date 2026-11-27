@@ -3,6 +3,7 @@ import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import { useEnvironmentNav, type SectionId } from "../state/environmentNav";
 import {
   clamp,
+  computeDefaultCamera,
   computeResponsivePerspective,
   computeSafePlaneNearZ,
   getHorizontalBasis,
@@ -19,7 +20,6 @@ import {
   CAMERA_BOUNDS,
   CEILING_ELEVATION_Y,
   CENTRAL_PRESENTATION,
-  DEFAULT_CAMERA,
   FLOOR_ELEVATION_Y,
   HORIZON_RADIUS_PX,
   stationMap,
@@ -125,24 +125,25 @@ export function useFreeCameraController({
     markInteracted,
   } = useEnvironmentNav();
 
+  const initialWidth = typeof window !== "undefined" ? window.innerWidth : 1280;
   const fixedPerspectiveRef = useRef<number>(
-    computeResponsivePerspective(
-      typeof window !== "undefined" ? window.innerWidth : 1280,
-    ),
+    computeResponsivePerspective(initialWidth),
   );
+
+  const initialDefaults = computeDefaultCamera(initialWidth);
 
   // Centralized Free-Roaming Camera State (ref-based for zero React rerenders per frame)
   const cameraRef = useRef<FreeCameraState>({
     position: {
-      current: { x: DEFAULT_CAMERA.x, y: DEFAULT_CAMERA.y, z: DEFAULT_CAMERA.z },
-      target: { x: DEFAULT_CAMERA.x, y: DEFAULT_CAMERA.y, z: DEFAULT_CAMERA.z },
+      current: { x: initialDefaults.x, y: initialDefaults.y, z: initialDefaults.z },
+      target: { x: initialDefaults.x, y: initialDefaults.y, z: initialDefaults.z },
     },
     orientation: {
-      yaw: DEFAULT_CAMERA.yaw,
-      targetYaw: DEFAULT_CAMERA.yaw,
+      yaw: initialDefaults.yaw,
+      targetYaw: initialDefaults.yaw,
       velYaw: 0,
-      pitch: DEFAULT_CAMERA.pitch,
-      targetPitch: DEFAULT_CAMERA.pitch,
+      pitch: initialDefaults.pitch,
+      targetPitch: initialDefaults.pitch,
       velPitch: 0,
     },
     navigation: {
@@ -278,13 +279,14 @@ export function useFreeCameraController({
     if (resetTriggered) {
       pressedKeysRef.current.clear();
       cam.navigation.previousPose = null;
+      const resetDefaults = computeDefaultCamera(window.innerWidth);
       startTween(
         {
-          x: DEFAULT_CAMERA.x,
-          y: DEFAULT_CAMERA.y,
-          z: DEFAULT_CAMERA.z,
-          yaw: shortestAngleTarget(cam.orientation.yaw, DEFAULT_CAMERA.yaw),
-          pitch: DEFAULT_CAMERA.pitch,
+          x: resetDefaults.x,
+          y: resetDefaults.y,
+          z: resetDefaults.z,
+          yaw: shortestAngleTarget(cam.orientation.yaw, resetDefaults.yaw),
+          pitch: resetDefaults.pitch,
         },
         "resetting",
         null,
